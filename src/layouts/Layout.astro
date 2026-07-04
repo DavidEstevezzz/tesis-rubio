@@ -119,6 +119,57 @@ const {
         outline: 2px solid #1f66f0;
         outline-offset: 2px;
       }
+      /* Chips (más pequeños que los pills): idiomas, etc. */
+      .idioma-row {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 0.4rem 0.6rem;
+        border: 1px solid #e2e8f0;
+        background: #fff;
+        border-radius: 0.85rem;
+        padding: 0.55rem 0.75rem;
+      }
+      .idioma-name {
+        flex: 0 0 5rem;
+        font-weight: 600;
+        font-size: 0.9rem;
+        color: #1a51dd;
+      }
+      .chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.4rem;
+        flex: 1 1 auto;
+      }
+      .chip {
+        cursor: pointer;
+      }
+      .chip > span {
+        display: inline-flex;
+        align-items: center;
+        border-radius: 9999px;
+        border: 1px solid #cbd5e1;
+        background: #fff;
+        padding: 0.3rem 0.7rem;
+        font-size: 0.8rem;
+        font-weight: 500;
+        color: #475569;
+        transition: all 0.12s ease;
+      }
+      .chip:hover > span {
+        border-color: #59a6ff;
+      }
+      .chip > .peer:checked + span {
+        background: #1f66f0;
+        border-color: #1f66f0;
+        color: #fff;
+        box-shadow: 0 4px 12px -6px rgba(31, 102, 240, 0.7);
+      }
+      .chip > .peer:focus-visible + span {
+        outline: 2px solid #1f66f0;
+        outline-offset: 2px;
+      }
       /* Proximidad (círculos numerados) */
       .prox {
         cursor: pointer;

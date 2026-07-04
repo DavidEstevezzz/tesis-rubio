@@ -75,9 +75,8 @@ const proximidades = [1, 2, 3, 4, 5];
       Valora la proximidad entre tu pronunciación y la de la persona que habla
       <span class="req">*</span>
     </h3>
-    <div class="prox-group mt-2 flex items-center justify-between gap-2">
-      <span class="text-xs font-medium text-amber-700">{PROXIMIDAD_MIN_LABEL}</span>
-      <div class="flex flex-1 justify-between gap-1 px-2">
+    <div class="prox-group mt-3">
+      <div class="flex items-center justify-between gap-1 px-1">
         {
           proximidades.map((v) => (
             <label class="prox">
@@ -87,7 +86,10 @@ const proximidades = [1, 2, 3, 4, 5];
           ))
         }
       </div>
-      <span class="text-xs font-medium text-brand-700">{PROXIMIDAD_MAX_LABEL}</span>
+      <div class="mt-2 flex items-center justify-between text-xs font-medium">
+        <span class="text-amber-700">{PROXIMIDAD_MIN_LABEL}</span>
+        <span class="text-brand-700">{PROXIMIDAD_MAX_LABEL}</span>
+      </div>
     </div>
   </div>
 

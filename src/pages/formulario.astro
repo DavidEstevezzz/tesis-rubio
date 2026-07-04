@@ -91,30 +91,20 @@ const totalGrab = GRABACIONES.length;
           <div class="field">
             <h3 class="field-title">Otros idiomas y sus niveles</h3>
             <p class="field-help">Marca solo los idiomas que hables.</p>
-            <div class="thin-scroll overflow-x-auto">
-              <table class="w-full min-w-[420px] border-separate border-spacing-y-1 text-sm">
-                <thead>
-                  <tr class="text-slate-500">
-                    <th class="text-left font-medium"></th>
-                    {NIVELES_IDIOMA.map((n) => <th class="px-2 font-medium">{n}</th>)}
-                  </tr>
-                </thead>
-                <tbody>
-                  {OTROS_IDIOMAS.map((idioma) => (
-                    <tr class="rounded bg-slate-50">
-                      <td class="rounded-l-lg bg-brand-50 px-3 py-2 font-medium text-brand-800">{idioma}</td>
-                      {NIVELES_IDIOMA.map((nivel) => (
-                        <td class="text-center">
-                          <label class="inline-flex cursor-pointer">
-                            <input type="radio" name={`idioma_${idioma}`} value={nivel} class="peer sr-only" />
-                            <span class="dot-mini"></span>
-                          </label>
-                        </td>
-                      ))}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div class="space-y-2">
+              {OTROS_IDIOMAS.map((idioma) => (
+                <div class="idioma-row">
+                  <span class="idioma-name">{idioma}</span>
+                  <div class="chips">
+                    {NIVELES_IDIOMA.map((nivel) => (
+                      <label class="chip">
+                        <input type="radio" name={`idioma_${idioma}`} value={nivel} class="peer sr-only" />
+                        <span>{nivel}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
 
@@ -282,23 +272,6 @@ const totalGrab = GRABACIONES.length;
       <div id="formMsg" class="hidden rounded-xl border p-4 text-sm"></div>
     </form>
   </main>
-
-  <style>
-    .dot-mini {
-      display: inline-block;
-      width: 1.25rem;
-      height: 1.25rem;
-      border-radius: 9999px;
-      border: 2px solid #cbd5e1;
-      background: #fff;
-      transition: all 0.12s;
-    }
-    .peer:checked + .dot-mini {
-      border-color: #1f66f0;
-      background: #1f66f0;
-      box-shadow: 0 0 0 4px rgba(31, 102, 240, 0.15);
-    }
-  </style>
 
   <script>
     // ── Stepper multipágina ──────────────────────────────────────────────
