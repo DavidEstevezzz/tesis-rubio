@@ -1,0 +1,42 @@
+---
+export interface Props {
+  user?: { email: string };
+  active?: 'resumen' | 'respuestas';
+}
+const { user, active } = Astro.props;
+const link = (id: string) =>
+  `rounded-full px-4 py-1.5 text-sm font-medium transition ${
+    active === id ? 'bg-brand-600 text-white' : 'text-slate-600 hover:bg-slate-100'
+  }`;
+---
+
+<header class="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur">
+  <div class="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6">
+    <div class="flex items-center gap-2">
+      <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-600 text-white">📊</span>
+      <span class="font-display font-bold text-brand-950">Resultados del estudio</span>
+    </div>
+
+    <nav class="hidden items-center gap-1 sm:flex">
+      <a href="/admin" class={link('resumen')}>Resumen</a>
+      <a href="/admin/respuestas" class={link('respuestas')}>Respuestas</a>
+      <a href="/api/export" class="rounded-full px-4 py-1.5 text-sm font-medium text-slate-600 transition hover:bg-slate-100">
+        ⬇ Exportar CSV
+      </a>
+    </nav>
+
+    <div class="flex items-center gap-3">
+      {user && <span class="hidden text-xs text-slate-400 md:inline">{user.email}</span>}
+      <a href="/api/auth/logout" class="rounded-full border border-slate-300 px-4 py-1.5 text-sm font-medium text-slate-600 transition hover:bg-slate-100">
+        Salir
+      </a>
+    </div>
+  </div>
+
+  <!-- Nav móvil -->
+  <nav class="flex items-center gap-1 border-t border-slate-100 px-4 py-2 sm:hidden">
+    <a href="/admin" class={link('resumen')}>Resumen</a>
+    <a href="/admin/respuestas" class={link('respuestas')}>Respuestas</a>
+    <a href="/api/export" class="rounded-full px-4 py-1.5 text-sm font-medium text-slate-600">⬇ CSV</a>
+  </nav>
+</header>

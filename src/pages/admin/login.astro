@@ -1,0 +1,66 @@
+---
+import Layout from '@/layouts/Layout.astro';
+// Si ya hay sesión válida, el middleware no protege /admin/login, así que
+// simplemente mostramos el formulario.
+---
+
+<Layout title="Acceso · Panel de resultados">
+  <main class="flex min-h-screen items-center justify-center px-6">
+    <div class="w-full max-w-sm">
+      <div class="mb-8 text-center">
+        <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-600 text-2xl text-white">
+          📊
+        </div>
+        <h1 class="mt-4 font-display text-2xl font-bold text-brand-950">Panel de resultados</h1>
+        <p class="mt-1 text-sm text-slate-500">Acceso restringido a investigadores.</p>
+      </div>
+
+      <form id="loginForm" class="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
+        <label class="field-title" for="email">Correo</label>
+        <input id="email" name="email" type="email" class="input" required autocomplete="username" />
+
+        <div class="mt-4">
+          <label class="field-title" for="password">Contraseña</label>
+          <input id="password" name="password" type="password" class="input" required autocomplete="current-password" />
+        </div>
+
+        <p id="loginError" class="error-msg mt-3"></p>
+
+        <button type="submit" id="loginBtn" class="mt-6 w-full rounded-full bg-brand-600 px-6 py-3 font-semibold text-white transition hover:bg-brand-700">
+          Entrar
+        </button>
+      </form>
+
+      <a href="/" class="mt-6 block text-center text-sm text-slate-400 hover:text-slate-600">← Volver al inicio</a>
+    </div>
+  </main>
+
+  <script>
+    const form = document.getElementById('loginForm') as HTMLFormElement;
+    const err = document.getElementById('loginError') as HTMLElement;
+    const btn = document.getElementById('loginBtn') as HTMLButtonElement;
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      err.style.display = 'none';
+      btn.disabled = true;
+      btn.textContent = 'Entrando…';
+      const fd = new FormData(form);
+      try {
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: fd.get('email'), password: fd.get('password') }),
+        });
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.error || 'Error');
+        window.location.href = '/admin';
+      } catch (e: any) {
+        err.textContent = e.message || 'No se pudo iniciar sesión.';
+        err.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Entrar';
+      }
+    });
+  </script>
+</Layout>

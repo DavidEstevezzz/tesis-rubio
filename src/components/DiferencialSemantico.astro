@@ -1,0 +1,194 @@
+---
+import { ESCALA_MIN, ESCALA_MAX, type ItemDiferencial } from '@/lib/config';
+
+export interface Props {
+  /** Prefijo del name de los inputs, p.ej. "g1_voz" → g1_voz_agradable */
+  name: string;
+  items: ItemDiferencial[];
+  required?: boolean;
+}
+const { name, items, required = true } = Astro.props;
+const valores = Array.from(
+  { length: ESCALA_MAX - ESCALA_MIN + 1 },
+  (_, i) => ESCALA_MIN + i
+);
+---
+
+<!--
+  Diferencial semántico:
+    [ adjetivo negativo (1) ]  ( ) ( ) ( ) ( ) ( )  [ adjetivo positivo (5) ]
+  Cuanto más a la derecha, más se acerca el adjetivo positivo.
+-->
+<div class="diferencial" role="group" aria-label="Escala de valoración">
+  <!-- Cabecera con la guía de puntuación -->
+  <div class="hidden sm:grid diferencial-row diferencial-head">
+    <div></div>
+    <div class="grid grid-cols-5">
+      {valores.map((v) => <span class="col-num">{v}</span>)}
+    </div>
+    <div></div>
+  </div>
+
+  {
+    items.map((item) => (
+      <fieldset class="diferencial-row group">
+        <legend class="sr-only">
+          {item.negativo} — {item.positivo}
+        </legend>
+        <div class="pole pole-neg">
+          <span class="pole-badge">1</span>
+          {item.negativo}
+        </div>
+
+        <div class="grid grid-cols-5 opts">
+          {valores.map((v) => (
+            <label class="opt" title={`${v}`}>
+              <input
+                type="radio"
+                name={`${name}_${item.id}`}
+                value={v}
+                required={required}
+                class="peer sr-only"
+              />
+              <span class="dot" aria-hidden="true" />
+              <span class="sm:hidden text-xs text-slate-500 mt-1">{v}</span>
+            </label>
+          ))}
+        </div>
+
+        <div class="pole pole-pos">
+          {item.positivo}
+          <span class="pole-badge pole-badge-pos">5</span>
+        </div>
+      </fieldset>
+    ))
+  }
+</div>
+
+<style>
+  .diferencial {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .diferencial-row {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  .diferencial-head {
+    padding: 0 0 0.25rem;
+  }
+  .diferencial-head .col-num {
+    text-align: center;
+    font-weight: 700;
+    font-size: 0.8rem;
+    color: #64748b;
+  }
+  fieldset.diferencial-row {
+    border: 1px solid #e2e8f0;
+    background: #fff;
+    border-radius: 0.9rem;
+    padding: 0.6rem 0.9rem;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  fieldset.diferencial-row:hover {
+    border-color: #bcdcff;
+    box-shadow: 0 1px 10px -6px rgba(31, 102, 240, 0.4);
+  }
+  .pole {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #334155;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .pole-neg {
+    justify-content: flex-start;
+    color: #b45309;
+  }
+  .pole-pos {
+    justify-content: flex-end;
+    text-align: right;
+    color: #1a51dd;
+  }
+  .pole-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.25rem;
+    height: 1.25rem;
+    border-radius: 9999px;
+    background: #fef3c7;
+    color: #b45309;
+    font-size: 0.7rem;
+    font-weight: 700;
+    flex: none;
+  }
+  .pole-badge-pos {
+    background: #dbeafe;
+    color: #1a51dd;
+  }
+  .opts {
+    gap: 0.15rem;
+  }
+  .opt {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    padding: 0.15rem;
+  }
+  .dot {
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 9999px;
+    border: 2px solid #cbd5e1;
+    background: #fff;
+    transition: all 0.12s ease;
+    position: relative;
+  }
+  .opt:hover .dot {
+    border-color: #59a6ff;
+    transform: scale(1.08);
+  }
+  /* Estado seleccionado: degradado de cálido (izq) a azul (der) según posición */
+  .peer:checked + .dot {
+    border-color: #1f66f0;
+    background: #1f66f0;
+    box-shadow: 0 0 0 4px rgba(31, 102, 240, 0.15);
+  }
+  .peer:focus-visible + .dot {
+    outline: 2px solid #1f66f0;
+    outline-offset: 2px;
+  }
+  /* Móvil: apilar polos arriba/abajo */
+  @media (max-width: 640px) {
+    .diferencial-row {
+      grid-template-columns: 1fr;
+      gap: 0.4rem;
+    }
+    .pole-pos {
+      justify-content: flex-start;
+      text-align: left;
+      flex-direction: row-reverse;
+    }
+    .opts {
+      justify-content: space-between;
+      padding: 0.2rem 0;
+    }
+  }
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+</style>

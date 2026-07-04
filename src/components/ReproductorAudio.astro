@@ -1,0 +1,55 @@
+---
+import type { Grabacion } from '@/lib/config';
+export interface Props {
+  grabacion: Grabacion;
+}
+const { grabacion } = Astro.props;
+const soundcloudSrc =
+  grabacion.tipo === 'soundcloud' && grabacion.url
+    ? `https://w.soundcloud.com/player/?url=${encodeURIComponent(
+        grabacion.url
+      )}&color=%231f66f0&auto_play=false&hide_related=true&show_comments=false&show_user=false&show_reposts=false&visual=false`
+    : null;
+---
+
+<div class="rounded-2xl border border-brand-100 bg-white p-4 shadow-sm">
+  <div class="mb-3 flex items-center gap-2 text-brand-800">
+    <span class="flex h-8 w-8 items-center justify-center rounded-full bg-brand-600 text-white">
+      🎧
+    </span>
+    <span class="font-semibold">{grabacion.titulo}</span>
+  </div>
+
+  {
+    grabacion.tipo === 'audio' && grabacion.url && (
+      <audio controls preload="none" class="w-full">
+        <source src={grabacion.url} />
+        Tu navegador no admite la reproducción de audio.
+      </audio>
+    )
+  }
+
+  {soundcloudSrc && (
+    <iframe
+      width="100%"
+      height="120"
+      scrolling="no"
+      frameborder="no"
+      allow="autoplay"
+      src={soundcloudSrc}
+      title={grabacion.titulo}
+    ></iframe>
+  )}
+
+  {
+    !grabacion.url && (
+      <div class="flex items-center gap-3 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-500">
+        <span class="text-lg">⏳</span>
+        <span>
+          Audio pendiente de subir. Configura su URL en{' '}
+          <code class="rounded bg-slate-200 px-1">src/lib/config.ts</code>.
+        </span>
+      </div>
+    )
+  }
+</div>

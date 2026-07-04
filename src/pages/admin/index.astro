@@ -1,0 +1,285 @@
+---
+import Layout from '@/layouts/Layout.astro';
+import AdminNav from '@/components/AdminNav.astro';
+import { getServiceClient } from '@/lib/supabase';
+import { computeStats } from '@/lib/stats';
+
+const user = Astro.locals.user;
+const supabase = getServiceClient();
+
+const [{ data: participantes }, { data: valoraciones }] = await Promise.all([
+  supabase.from('participantes').select('*'),
+  supabase.from('valoraciones').select('*'),
+]);
+
+const stats = computeStats(participantes ?? [], valoraciones ?? []);
+const hayDatos = stats.resumen.totalParticipantes > 0;
+---
+
+<Layout title="Resumen · Panel de resultados">
+  <div class="min-h-screen bg-slate-100">
+    <AdminNav user={user} active="resumen" />
+
+    <main class="mx-auto max-w-6xl px-4 py-8 sm:px-6">
+      <h1 class="font-display text-2xl font-bold text-brand-950">Resumen del estudio</h1>
+
+      {
+        !hayDatos ? (
+          <div class="mt-8 rounded-2xl border border-dashed border-slate-300 bg-white p-12 text-center text-slate-500">
+            <div class="text-4xl">📭</div>
+            <p class="mt-3 font-medium">Aún no hay respuestas registradas.</p>
+            <p class="text-sm">Cuando los participantes completen el formulario, aquí verás las estadísticas.</p>
+          </div>
+        ) : (
+          <>
+            <!-- KPIs -->
+            <div class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <div class="kpi">
+                <span class="kpi-val">{stats.resumen.totalParticipantes}</span>
+                <span class="kpi-label">Participantes</span>
+              </div>
+              <div class="kpi">
+                <span class="kpi-val">{stats.resumen.totalValoraciones}</span>
+                <span class="kpi-label">Valoraciones de audio</span>
+              </div>
+              <div class="kpi">
+                <span class="kpi-val">{stats.resumen.edadMedia ?? '—'}</span>
+                <span class="kpi-label">Edad media</span>
+              </div>
+              <div class="kpi">
+                <span class="kpi-val">{stats.resumen.proximidadMedia}</span>
+                <span class="kpi-label">Proximidad media (1-5)</span>
+              </div>
+            </div>
+
+            <!-- Gráficas -->
+            <div class="mt-8 grid gap-6 lg:grid-cols-2">
+              <div class="card lg:col-span-2">
+                <h2 class="card-title">Ranking de grabaciones por agradabilidad de la voz</h2>
+                <p class="card-sub">Media global del diferencial semántico de la voz (1 = negativo, 5 = positivo).</p>
+                <div class="chart-box"><canvas id="chartRanking"></canvas></div>
+              </div>
+
+              <div class="card">
+                <h2 class="card-title">Perfil medio de la voz</h2>
+                <p class="card-sub">Media de cada par de adjetivos en todas las grabaciones.</p>
+                <div class="chart-box"><canvas id="chartVoz"></canvas></div>
+              </div>
+
+              <div class="card">
+                <h2 class="card-title">Percepción de la persona</h2>
+                <p class="card-sub">Media global del diferencial semántico de la persona.</p>
+                <div class="chart-box"><canvas id="chartPersona"></canvas></div>
+              </div>
+
+              <div class="card">
+                <h2 class="card-title">Percepción de la cultura</h2>
+                <p class="card-sub">Media global del diferencial semántico de la cultura.</p>
+                <div class="chart-box"><canvas id="chartCultura"></canvas></div>
+              </div>
+
+              <div class="card">
+                <h2 class="card-title">Proximidad con la propia pronunciación</h2>
+                <p class="card-sub">1 = totalmente diferente · 5 = idéntica.</p>
+                <div class="chart-box"><canvas id="chartProximidad"></canvas></div>
+              </div>
+
+              <div class="card">
+                <h2 class="card-title">Puesto de trabajo percibido</h2>
+                <div class="chart-box"><canvas id="chartPuesto"></canvas></div>
+              </div>
+              <div class="card">
+                <h2 class="card-title">Nivel de ingresos percibido</h2>
+                <div class="chart-box"><canvas id="chartIngresos"></canvas></div>
+              </div>
+              <div class="card">
+                <h2 class="card-title">Nivel de estudios percibido</h2>
+                <div class="chart-box"><canvas id="chartEstudios"></canvas></div>
+              </div>
+
+              <div class="card">
+                <h2 class="card-title">Región (comunidad autónoma) percibida</h2>
+                <div class="chart-box"><canvas id="chartRegion"></canvas></div>
+              </div>
+
+              <!-- Demografía -->
+              <div class="card">
+                <h2 class="card-title">Género de los participantes</h2>
+                <div class="chart-box"><canvas id="chartGenero"></canvas></div>
+              </div>
+              <div class="card">
+                <h2 class="card-title">Nivel de español</h2>
+                <div class="chart-box"><canvas id="chartNivel"></canvas></div>
+              </div>
+              <div class="card">
+                <h2 class="card-title">Edad de los participantes</h2>
+                <div class="chart-box"><canvas id="chartEdad"></canvas></div>
+              </div>
+
+              <div class="card lg:col-span-2">
+                <h2 class="card-title">Preguntas sobre el género de quien habla</h2>
+                <div class="grid gap-6 sm:grid-cols-2">
+                  <div>
+                    <p class="card-sub text-center">¿Trato diferenciado entre Mariam y Omar?</p>
+                    <div class="chart-box"><canvas id="chartTrato1"></canvas></div>
+                  </div>
+                  <div>
+                    <p class="card-sub text-center">¿Habría sido diferente con una jefa mujer?</p>
+                    <div class="chart-box"><canvas id="chartTrato2"></canvas></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </>
+        )
+      }
+    </main>
+  </div>
+
+  <script type="application/json" id="stats-data" set:html={JSON.stringify(stats)}></script>
+
+  <script>
+    import Chart from 'chart.js/auto';
+
+    const el = document.getElementById('stats-data');
+    if (el && el.textContent) {
+      const stats = JSON.parse(el.textContent);
+      initCharts(stats);
+    }
+
+    const BRAND = '#1f66f0';
+    const ACCENT = '#ff7a2f';
+    const PALETTE = ['#1f66f0', '#ff7a2f', '#22c55e', '#a855f7', '#eab308', '#06b6d4', '#ef4444', '#64748b'];
+
+    function initCharts(stats: any) {
+      Chart.defaults.font.family = 'Inter, system-ui, sans-serif';
+      Chart.defaults.color = '#475569';
+
+      const scale15 = { min: 1, max: 5, ticks: { stepSize: 1 } };
+
+      // Ranking de grabaciones (barra horizontal)
+      new Chart(byId('chartRanking'), {
+        type: 'bar',
+        data: {
+          labels: stats.ranking.map((g: any) => g.titulo),
+          datasets: [{
+            label: 'Agradabilidad de la voz',
+            data: stats.ranking.map((g: any) => g.mediaVozGlobal),
+            backgroundColor: BRAND,
+            borderRadius: 6,
+          }],
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: { x: scale15 },
+        },
+      });
+
+      barDiferencial('chartVoz', stats.global.voz);
+      barDiferencial('chartPersona', stats.global.persona);
+      barDiferencial('chartCultura', stats.global.cultura);
+
+      // Proximidad
+      new Chart(byId('chartProximidad'), {
+        type: 'bar',
+        data: { labels: stats.global.proximidadDist.labels, datasets: [{ data: stats.global.proximidadDist.data, backgroundColor: ACCENT, borderRadius: 6 }] },
+        options: baseBar(),
+      });
+
+      doughnut('chartPuesto', stats.global.puesto);
+      doughnut('chartIngresos', stats.global.ingresos);
+      doughnut('chartEstudios', stats.global.estudios);
+
+      // Región (barra horizontal, solo con datos > 0)
+      const reg = filterNonZero(stats.global.regionPercibida);
+      new Chart(byId('chartRegion'), {
+        type: 'bar',
+        data: { labels: reg.labels, datasets: [{ data: reg.data, backgroundColor: PALETTE[3], borderRadius: 5 }] },
+        options: { ...baseBar(), indexAxis: 'y' },
+      });
+
+      doughnut('chartGenero', stats.demografia.genero);
+      new Chart(byId('chartNivel'), {
+        type: 'bar',
+        data: { labels: stats.demografia.nivelEspanol.labels, datasets: [{ data: stats.demografia.nivelEspanol.data, backgroundColor: BRAND, borderRadius: 6 }] },
+        options: baseBar(),
+      });
+      new Chart(byId('chartEdad'), {
+        type: 'bar',
+        data: { labels: stats.demografia.tramos, datasets: [{ data: stats.demografia.edadHist, backgroundColor: PALETTE[2], borderRadius: 6 }] },
+        options: baseBar(),
+      });
+
+      siNo('chartTrato1', stats.genero_preguntas.tratoDiferenciado);
+      siNo('chartTrato2', stats.genero_preguntas.tratoMujerDiferente);
+
+      function barDiferencial(id: string, items: any[]) {
+        new Chart(byId(id), {
+          type: 'bar',
+          data: {
+            labels: items.map((x) => x.etiqueta),
+            datasets: [{ data: items.map((x) => x.media), backgroundColor: items.map((_, i) => PALETTE[i % PALETTE.length]), borderRadius: 5 }],
+          },
+          options: {
+            indexAxis: 'y',
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: { x: scale15 },
+          },
+        });
+      }
+    }
+
+    function byId(id: string) {
+      return document.getElementById(id) as HTMLCanvasElement;
+    }
+    function baseBar() {
+      return {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
+      } as any;
+    }
+    function doughnut(id: string, dist: { labels: string[]; data: number[] }) {
+      const f = filterNonZero(dist);
+      new Chart(byId(id), {
+        type: 'doughnut',
+        data: { labels: f.labels, datasets: [{ data: f.data, backgroundColor: PALETTE }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } },
+      });
+    }
+    function siNo(id: string, v: { si: number; no: number }) {
+      new Chart(byId(id), {
+        type: 'doughnut',
+        data: { labels: ['Sí', 'No'], datasets: [{ data: [v.si, v.no], backgroundColor: ['#22c55e', '#ef4444'] }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } },
+      });
+    }
+    function filterNonZero(dist: { labels: string[]; data: number[] }) {
+      const labels: string[] = [], data: number[] = [];
+      dist.labels.forEach((l, i) => {
+        if (dist.data[i] > 0) { labels.push(l); data.push(dist.data[i]); }
+      });
+      return { labels, data };
+    }
+  </script>
+
+  <style>
+    .kpi {
+      display: flex; flex-direction: column; gap: 0.15rem;
+      border-radius: 1rem; background: #fff; padding: 1.25rem;
+      border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+    .kpi-val { font-size: 2rem; font-weight: 800; color: #1d3c8d; line-height: 1; }
+    .kpi-label { font-size: 0.85rem; color: #64748b; }
+    .card {
+      border-radius: 1rem; background: #fff; padding: 1.25rem 1.5rem;
+      border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+    .card-title { font-weight: 700; color: #1d3c8d; font-size: 1rem; }
+    .card-sub { font-size: 0.8rem; color: #94a3b8; margin-top: 0.15rem; }
+    .chart-box { position: relative; height: 300px; margin-top: 0.75rem; }
+  </style>
+</Layout>

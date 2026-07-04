@@ -1,0 +1,176 @@
+---
+export interface Props {
+  title?: string;
+  description?: string;
+}
+const {
+  title = 'Estudio Sociolingüístico',
+  description = 'Formulario de investigación sobre actitudes lingüísticas y el uso del español en distintos contextos sociales.',
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang="es" class="scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content={description} />
+    <meta name="robots" content="noindex" />
+    <title>{title}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%97%A3%EF%B8%8F%3C/text%3E%3C/svg%3E" />
+  </head>
+  <body class="min-h-screen bg-slate-50 text-slate-800 antialiased">
+    <slot />
+    <style is:global>
+      :root {
+        color-scheme: light;
+      }
+      body {
+        font-family: 'Inter', system-ui, sans-serif;
+      }
+      /* Scrollbar sutil en el diferencial semántico */
+      .thin-scroll::-webkit-scrollbar {
+        height: 8px;
+      }
+      .thin-scroll::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 9999px;
+      }
+
+      /* ── Utilidades de formulario (compartidas por los componentes) ── */
+      .field {
+        margin-top: 1.75rem;
+      }
+      .field-title {
+        display: block;
+        font-weight: 600;
+        color: #1d3c8d;
+        font-size: 1rem;
+        line-height: 1.4;
+      }
+      .field-help {
+        margin-top: 0.25rem;
+        margin-bottom: 0.75rem;
+        font-size: 0.85rem;
+        color: #64748b;
+      }
+      .req {
+        color: #f45f12;
+        margin-left: 0.15rem;
+      }
+      .input {
+        margin-top: 0.5rem;
+        width: 100%;
+        border-radius: 0.75rem;
+        border: 1px solid #cbd5e1;
+        background: #fff;
+        padding: 0.65rem 0.85rem;
+        font-size: 0.95rem;
+        color: #1e293b;
+        transition: border-color 0.15s, box-shadow 0.15s;
+      }
+      .input:focus {
+        outline: none;
+        border-color: #1f66f0;
+        box-shadow: 0 0 0 4px rgba(31, 102, 240, 0.12);
+      }
+      textarea.input {
+        min-height: 7rem;
+        resize: vertical;
+      }
+      .pills {
+        margin-top: 0.6rem;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+      }
+      .pill {
+        cursor: pointer;
+      }
+      .pill > span {
+        display: inline-flex;
+        align-items: center;
+        border-radius: 9999px;
+        border: 1px solid #cbd5e1;
+        background: #fff;
+        padding: 0.5rem 1.1rem;
+        font-size: 0.9rem;
+        font-weight: 500;
+        color: #334155;
+        transition: all 0.12s ease;
+      }
+      .pill:hover > span {
+        border-color: #59a6ff;
+      }
+      .pill .peer:checked ~ span,
+      .pill > .peer:checked + span {
+        background: #1f66f0;
+        border-color: #1f66f0;
+        color: #fff;
+        box-shadow: 0 6px 16px -8px rgba(31, 102, 240, 0.7);
+      }
+      .pill .peer:focus-visible + span {
+        outline: 2px solid #1f66f0;
+        outline-offset: 2px;
+      }
+      /* Proximidad (círculos numerados) */
+      .prox {
+        cursor: pointer;
+      }
+      .prox-dot {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 2.4rem;
+        height: 2.4rem;
+        border-radius: 9999px;
+        border: 2px solid #cbd5e1;
+        background: #fff;
+        font-weight: 700;
+        color: #64748b;
+        transition: all 0.12s ease;
+      }
+      .prox:hover .prox-dot {
+        border-color: #59a6ff;
+      }
+      .prox .peer:checked + .prox-dot {
+        background: #1f66f0;
+        border-color: #1f66f0;
+        color: #fff;
+        transform: scale(1.06);
+      }
+      .prox .peer:focus-visible + .prox-dot {
+        outline: 2px solid #1f66f0;
+        outline-offset: 2px;
+      }
+      .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+      }
+      /* Marca de error de validación */
+      .field-error > span:first-of-type,
+      .input.field-error {
+        border-color: #ef4444 !important;
+      }
+      .error-msg {
+        display: none;
+        margin-top: 0.4rem;
+        font-size: 0.8rem;
+        color: #dc2626;
+      }
+    </style>
+  </body>
+</html>

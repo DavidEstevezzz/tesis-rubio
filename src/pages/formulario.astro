@@ -1,0 +1,454 @@
+---
+import Layout from '@/layouts/Layout.astro';
+import PasoGrabacion from '@/components/PasoGrabacion.astro';
+import {
+  GRABACIONES,
+  GENEROS,
+  NIVELES_EDUCATIVOS,
+  NIVELES_ESPANOL,
+  METODOS_ESTUDIO,
+  OTROS_IDIOMAS,
+  NIVELES_IDIOMA,
+} from '@/lib/config';
+
+const totalGrab = GRABACIONES.length;
+---
+
+<Layout title="Formulario · Estudio Sociolingüístico">
+  <main class="mx-auto max-w-3xl px-4 py-8 sm:px-6">
+    <header class="mb-6">
+      <a href="/" class="text-sm text-brand-600 hover:underline">← Inicio</a>
+      <h1 class="mt-2 font-display text-3xl font-extrabold text-brand-950">
+        Estudio Sociolingüístico
+      </h1>
+      <p class="mt-1 text-slate-500">
+        Completa este formulario para contribuir con nuestro estudio sobre el
+        uso del lenguaje en diferentes contextos sociales.
+      </p>
+    </header>
+
+    <!-- Barra de progreso -->
+    <div class="sticky top-0 z-20 -mx-4 mb-6 bg-slate-50/90 px-4 py-3 backdrop-blur sm:mx-0 sm:rounded-xl sm:px-4">
+      <div class="flex items-center justify-between text-sm font-medium text-slate-500">
+        <span id="stepLabel">Datos personales</span>
+        <span><span id="stepNum">1</span> / <span id="stepTotal"></span></span>
+      </div>
+      <div class="mt-2 h-2 w-full overflow-hidden rounded-full bg-slate-200">
+        <div id="progressBar" class="h-full w-0 rounded-full bg-gradient-to-r from-brand-500 to-accent-500 transition-all duration-300"></div>
+      </div>
+    </div>
+
+    <form id="estudioForm" novalidate>
+      <!-- ═══ PASO 1 · DATOS PERSONALES ═══ -->
+      <section class="step" data-step-label="Datos personales">
+        <div class="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm sm:p-7">
+          <h2 class="font-display text-xl font-bold text-brand-900">Datos personales</h2>
+
+          <div class="field">
+            <label class="field-title" for="email">
+              Correo electrónico<span class="req">*</span>
+            </label>
+            <p class="field-help">
+              Solo se usa para evitar respuestas duplicadas. No se publicará ni se
+              asociará a tus respuestas en los resultados.
+            </p>
+            <input id="email" name="email" type="email" class="input" placeholder="tucorreo@ejemplo.com" required />
+          </div>
+
+          <div class="field">
+            <h3 class="field-title">Género<span class="req">*</span></h3>
+            <div class="pills">
+              {GENEROS.map((g) => (
+                <label class="pill">
+                  <input type="radio" name="genero" value={g} required class="peer sr-only" data-toggle-otro={g === 'Otro' ? 'genero_otro' : null} />
+                  <span>{g}</span>
+                </label>
+              ))}
+            </div>
+            <input id="genero_otro" name="genero_otro" type="text" class="input mt-2 hidden" placeholder="Especifica…" />
+          </div>
+
+          <div class="grid gap-5 sm:grid-cols-2">
+            <div class="field">
+              <label class="field-title" for="edad">Edad<span class="req">*</span></label>
+              <input id="edad" name="edad" type="number" min="1" max="120" class="input" placeholder="p. ej., 23" required />
+            </div>
+            <div class="field">
+              <label class="field-title" for="lenguas_maternas">Lengua(s) materna(s)<span class="req">*</span></label>
+              <input id="lenguas_maternas" name="lenguas_maternas" type="text" class="input" placeholder="Indica si hay varias" required />
+            </div>
+            <div class="field">
+              <label class="field-title" for="ciudad_nacimiento">Ciudad de nacimiento<span class="req">*</span></label>
+              <input id="ciudad_nacimiento" name="ciudad_nacimiento" type="text" class="input" required />
+            </div>
+            <div class="field">
+              <label class="field-title" for="ciudad_residencia">Ciudad de residencia<span class="req">*</span></label>
+              <input id="ciudad_residencia" name="ciudad_residencia" type="text" class="input" required />
+            </div>
+          </div>
+
+          <!-- Otros idiomas y niveles -->
+          <div class="field">
+            <h3 class="field-title">Otros idiomas y sus niveles</h3>
+            <p class="field-help">Marca solo los idiomas que hables.</p>
+            <div class="thin-scroll overflow-x-auto">
+              <table class="w-full min-w-[420px] border-separate border-spacing-y-1 text-sm">
+                <thead>
+                  <tr class="text-slate-500">
+                    <th class="text-left font-medium"></th>
+                    {NIVELES_IDIOMA.map((n) => <th class="px-2 font-medium">{n}</th>)}
+                  </tr>
+                </thead>
+                <tbody>
+                  {OTROS_IDIOMAS.map((idioma) => (
+                    <tr class="rounded bg-slate-50">
+                      <td class="rounded-l-lg bg-brand-50 px-3 py-2 font-medium text-brand-800">{idioma}</td>
+                      {NIVELES_IDIOMA.map((nivel) => (
+                        <td class="text-center">
+                          <label class="inline-flex cursor-pointer">
+                            <input type="radio" name={`idioma_${idioma}`} value={nivel} class="peer sr-only" />
+                            <span class="dot-mini"></span>
+                          </label>
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="grid gap-5 sm:grid-cols-2">
+            <div class="field">
+              <h3 class="field-title">¿Estudias?<span class="req">*</span></h3>
+              <div class="pills">
+                <label class="pill"><input type="radio" name="estudia" value="si" required class="peer sr-only" /><span>Sí</span></label>
+                <label class="pill"><input type="radio" name="estudia" value="no" required class="peer sr-only" /><span>No</span></label>
+              </div>
+            </div>
+            <div class="field">
+              <h3 class="field-title">¿Trabajas?<span class="req">*</span></h3>
+              <div class="pills">
+                <label class="pill"><input type="radio" name="trabaja" value="si" required class="peer sr-only" /><span>Sí</span></label>
+                <label class="pill"><input type="radio" name="trabaja" value="no" required class="peer sr-only" /><span>No</span></label>
+              </div>
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="field-title" for="nivel_educativo">Nivel educativo<span class="req">*</span></label>
+            <select id="nivel_educativo" name="nivel_educativo" class="input" required>
+              <option value="" disabled selected>Selecciona…</option>
+              {NIVELES_EDUCATIVOS.map((n) => <option value={n}>{n}</option>)}
+            </select>
+          </div>
+
+          <div class="field">
+            <label class="field-title" for="anios_estudio_espanol">Años de estudio del español<span class="req">*</span></label>
+            <input id="anios_estudio_espanol" name="anios_estudio_espanol" type="number" min="0" max="99" class="input" required />
+          </div>
+
+          <div class="field">
+            <h3 class="field-title">Métodos de estudio del español<span class="req">*</span></h3>
+            <div class="pills" data-required-group="metodos_estudio">
+              {METODOS_ESTUDIO.map((m) => (
+                <label class="pill">
+                  <input type="checkbox" name="metodos_estudio" value={m} class="peer sr-only" />
+                  <span>{m}</span>
+                </label>
+              ))}
+            </div>
+            <p class="error-msg">Selecciona al menos una opción.</p>
+          </div>
+
+          <div class="field">
+            <label class="field-title" for="metodos_ejemplos">
+              Menciona ejemplos concretos de los métodos que utilizas para aprender y
+              practicar español<span class="req">*</span>
+            </label>
+            <p class="field-help">
+              Hablar con un amigo, ver telenovelas en español, interactuar con
+              turistas, leer libros, preparar clases, escuchar música, etc.
+            </p>
+            <textarea id="metodos_ejemplos" name="metodos_ejemplos" class="input" required></textarea>
+          </div>
+
+          <div class="field">
+            <label class="field-title" for="nivel_espanol">Nivel en español<span class="req">*</span></label>
+            <select id="nivel_espanol" name="nivel_espanol" class="input" required>
+              <option value="" disabled selected>Selecciona…</option>
+              {NIVELES_ESPANOL.map((n) => <option value={n}>{n}</option>)}
+            </select>
+          </div>
+
+          <div class="grid gap-5 sm:grid-cols-2">
+            <div class="field">
+              <h3 class="field-title">¿Tienes familia en España?<span class="req">*</span></h3>
+              <div class="pills">
+                <label class="pill"><input type="radio" name="familia_espana" value="si" required class="peer sr-only" /><span>Sí</span></label>
+                <label class="pill"><input type="radio" name="familia_espana" value="no" required class="peer sr-only" /><span>No</span></label>
+              </div>
+            </div>
+            <div class="field">
+              <h3 class="field-title">¿Has visitado España?<span class="req">*</span></h3>
+              <div class="pills">
+                <label class="pill"><input type="radio" name="visitado_espana" value="si" required class="peer sr-only" /><span>Sí</span></label>
+                <label class="pill"><input type="radio" name="visitado_espana" value="no" required class="peer sr-only" /><span>No</span></label>
+              </div>
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="field-title" for="mejor_region_opinion">
+              En tu opinión, ¿en qué región o zona de España se habla mejor? Justifica
+              tu respuesta<span class="req">*</span>
+            </label>
+            <textarea id="mejor_region_opinion" name="mejor_region_opinion" class="input" required></textarea>
+          </div>
+
+          <div class="field">
+            <h3 class="field-title">¿Has visitado otro(s) país(es) hispanohablante(s)?<span class="req">*</span></h3>
+            <div class="pills">
+              <label class="pill"><input type="radio" name="visitado_otros_paises" value="si" required class="peer sr-only" /><span>Sí</span></label>
+              <label class="pill"><input type="radio" name="visitado_otros_paises" value="no" required class="peer sr-only" /><span>No</span></label>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═══ PASOS 2..N+1 · GRABACIONES ═══ -->
+      {
+        GRABACIONES.map((g, i) => (
+          <div class="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm sm:p-7 step-wrapper hidden">
+            <PasoGrabacion grabacion={g} indice={i + 1} total={totalGrab} />
+          </div>
+        ))
+      }
+
+      <!-- ═══ PASO FINAL · GÉNERO Y CIERRE ═══ -->
+      <section class="step" data-step-label="Reflexión final">
+        <div class="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm sm:p-7">
+          <h2 class="font-display text-xl font-bold text-brand-900">Reflexión final</h2>
+          <p class="mt-1 text-sm text-slate-500">
+            En las grabaciones, el jefe de un hotel se dirige a dos empleados
+            (Mariam y Omar).
+          </p>
+
+          <div class="field">
+            <h3 class="field-title">
+              ¿Crees que la persona que habla tiene un trato diferenciado entre Mariam
+              y Omar?<span class="req">*</span>
+            </h3>
+            <div class="pills">
+              <label class="pill"><input type="radio" name="trato_diferenciado" value="si" required class="peer sr-only" /><span>Sí</span></label>
+              <label class="pill"><input type="radio" name="trato_diferenciado" value="no" required class="peer sr-only" /><span>No</span></label>
+            </div>
+          </div>
+
+          <div class="field">
+            <h3 class="field-title">
+              ¿Piensas que el trato de una mujer (jefa de hotel) habría sido diferente?<span class="req">*</span>
+            </h3>
+            <div class="pills">
+              <label class="pill"><input type="radio" name="trato_mujer_diferente" value="si" required class="peer sr-only" /><span>Sí</span></label>
+              <label class="pill"><input type="radio" name="trato_mujer_diferente" value="no" required class="peer sr-only" /><span>No</span></label>
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="field-title" for="actitud_genero_influye">
+              Por último, ¿piensas que tu actitud hacia la modalidad dialectal puede
+              verse influida por el género de la persona que habla? Desarrolla tu
+              respuesta brevemente.<span class="req">*</span>
+            </label>
+            <textarea id="actitud_genero_influye" name="actitud_genero_influye" class="input" required></textarea>
+          </div>
+        </div>
+      </section>
+
+      <!-- Navegación -->
+      <div class="sticky bottom-0 z-20 mt-6 flex items-center justify-between gap-3 border-t border-slate-200 bg-slate-50/95 py-4 backdrop-blur">
+        <button type="button" id="btnPrev" class="rounded-full border border-slate-300 bg-white px-6 py-2.5 font-semibold text-slate-600 transition hover:bg-slate-100 disabled:opacity-40" disabled>
+          ← Anterior
+        </button>
+        <button type="button" id="btnNext" class="rounded-full bg-brand-600 px-8 py-2.5 font-semibold text-white shadow-lg shadow-brand-600/30 transition hover:bg-brand-700">
+          Siguiente →
+        </button>
+        <button type="submit" id="btnSubmit" class="hidden rounded-full bg-accent-500 px-8 py-2.5 font-semibold text-white shadow-lg shadow-accent-500/30 transition hover:bg-accent-600">
+          Enviar respuestas
+        </button>
+      </div>
+
+      <!-- Mensaje de estado -->
+      <div id="formMsg" class="hidden rounded-xl border p-4 text-sm"></div>
+    </form>
+  </main>
+
+  <style>
+    .dot-mini {
+      display: inline-block;
+      width: 1.25rem;
+      height: 1.25rem;
+      border-radius: 9999px;
+      border: 2px solid #cbd5e1;
+      background: #fff;
+      transition: all 0.12s;
+    }
+    .peer:checked + .dot-mini {
+      border-color: #1f66f0;
+      background: #1f66f0;
+      box-shadow: 0 0 0 4px rgba(31, 102, 240, 0.15);
+    }
+  </style>
+
+  <script>
+    // ── Stepper multipágina ──────────────────────────────────────────────
+    const form = document.getElementById('estudioForm') as HTMLFormElement;
+    // Cada paso es un .step directo o un .step dentro de .step-wrapper
+    const steps = Array.from(form.querySelectorAll('.step')) as HTMLElement[];
+    const wrappers = steps.map(
+      (s) => (s.closest('.step-wrapper') as HTMLElement) ?? s
+    );
+    const total = steps.length;
+    let current = 0;
+
+    const btnPrev = document.getElementById('btnPrev') as HTMLButtonElement;
+    const btnNext = document.getElementById('btnNext') as HTMLButtonElement;
+    const btnSubmit = document.getElementById('btnSubmit') as HTMLButtonElement;
+    const progressBar = document.getElementById('progressBar') as HTMLElement;
+    const stepLabel = document.getElementById('stepLabel') as HTMLElement;
+    const stepNum = document.getElementById('stepNum') as HTMLElement;
+    const stepTotal = document.getElementById('stepTotal') as HTMLElement;
+    const formMsg = document.getElementById('formMsg') as HTMLElement;
+    stepTotal.textContent = String(total);
+
+    function render() {
+      wrappers.forEach((w, i) => w.classList.toggle('hidden', i !== current));
+      const label = steps[current].dataset.stepLabel ?? '';
+      stepLabel.textContent = label;
+      stepNum.textContent = String(current + 1);
+      progressBar.style.width = `${((current + 1) / total) * 100}%`;
+      btnPrev.disabled = current === 0;
+      const last = current === total - 1;
+      btnNext.classList.toggle('hidden', last);
+      btnSubmit.classList.toggle('hidden', !last);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function clearErrors(step: HTMLElement) {
+      step.querySelectorAll('.field-error').forEach((el) => el.classList.remove('field-error'));
+      step.querySelectorAll('.error-msg').forEach((el) => ((el as HTMLElement).style.display = 'none'));
+    }
+
+    function validateStep(step: HTMLElement): boolean {
+      clearErrors(step);
+      let ok = true;
+      let firstInvalid: HTMLElement | null = null;
+      const seenRadios = new Set<string>();
+
+      step.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>('[required]').forEach((el) => {
+        if (el instanceof HTMLInputElement && el.type === 'radio') {
+          if (seenRadios.has(el.name)) return;
+          seenRadios.add(el.name);
+          const checked = step.querySelector(`input[name="${CSS.escape(el.name)}"]:checked`);
+          if (!checked) {
+            ok = false;
+            const group = el.closest('.pills') ?? el.closest('.field');
+            group?.classList.add('field-error');
+            firstInvalid = firstInvalid || (group as HTMLElement);
+          }
+        } else if (!el.value.trim()) {
+          ok = false;
+          el.classList.add('field-error');
+          firstInvalid = firstInvalid || (el as HTMLElement);
+        }
+      });
+
+      // Grupos de checkbox obligatorios
+      step.querySelectorAll<HTMLElement>('[data-required-group]').forEach((group) => {
+        const name = group.dataset.requiredGroup!;
+        const any = step.querySelector(`input[name="${CSS.escape(name)}"]:checked`);
+        if (!any) {
+          ok = false;
+          group.classList.add('field-error');
+          const msg = group.parentElement?.querySelector('.error-msg') as HTMLElement | null;
+          if (msg) msg.style.display = 'block';
+          firstInvalid = firstInvalid || group;
+        }
+      });
+
+      if (firstInvalid) {
+        (firstInvalid as HTMLElement).scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      return ok;
+    }
+
+    btnNext.addEventListener('click', () => {
+      if (!validateStep(steps[current])) return;
+      if (current < total - 1) {
+        current++;
+        render();
+      }
+    });
+    btnPrev.addEventListener('click', () => {
+      if (current > 0) {
+        current--;
+        render();
+      }
+    });
+
+    // Campo "Otro" del género
+    form.querySelectorAll<HTMLInputElement>('input[data-toggle-otro]').forEach((radio) => {
+      const targetId = radio.dataset.toggleOtro!;
+      const target = document.getElementById(targetId) as HTMLInputElement;
+      form.querySelectorAll<HTMLInputElement>(`input[name="${radio.name}"]`).forEach((r) => {
+        r.addEventListener('change', () => {
+          const show = radio.checked;
+          target.classList.toggle('hidden', !show);
+          if (!show) target.value = '';
+        });
+      });
+    });
+
+    // ── Envío ────────────────────────────────────────────────────────────
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      // Validar todos los pasos
+      for (let i = 0; i < total; i++) {
+        if (!validateStep(steps[i])) {
+          current = i;
+          render();
+          return;
+        }
+      }
+
+      btnSubmit.disabled = true;
+      btnSubmit.textContent = 'Enviando…';
+      formMsg.className = 'hidden';
+
+      const data = Object.fromEntries(new FormData(form).entries());
+      // metodos_estudio es múltiple → recogerlo aparte
+      (data as any).metodos_estudio = Array.from(
+        form.querySelectorAll<HTMLInputElement>('input[name="metodos_estudio"]:checked')
+      ).map((c) => c.value);
+
+      try {
+        const res = await fetch('/api/submit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
+        });
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.error || 'Error al enviar.');
+        window.location.href = '/gracias';
+      } catch (err: any) {
+        formMsg.className = 'rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700';
+        formMsg.textContent = err.message || 'Ha ocurrido un error. Inténtalo de nuevo.';
+        btnSubmit.disabled = false;
+        btnSubmit.textContent = 'Enviar respuestas';
+      }
+    });
+
+    render();
+  </script>
+</Layout>

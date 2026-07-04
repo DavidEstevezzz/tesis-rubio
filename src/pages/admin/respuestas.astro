@@ -1,0 +1,73 @@
+---
+import Layout from '@/layouts/Layout.astro';
+import AdminNav from '@/components/AdminNav.astro';
+import { getServiceClient } from '@/lib/supabase';
+
+const user = Astro.locals.user;
+const supabase = getServiceClient();
+
+const { data: participantes } = await supabase
+  .from('participantes')
+  .select('*')
+  .order('created_at', { ascending: false });
+
+const fmt = (b: boolean | null) => (b === true ? 'Sí' : b === false ? 'No' : '—');
+---
+
+<Layout title="Respuestas · Panel de resultados">
+  <div class="min-h-screen bg-slate-100">
+    <AdminNav user={user} active="respuestas" />
+
+    <main class="mx-auto max-w-6xl px-4 py-8 sm:px-6">
+      <div class="flex items-center justify-between">
+        <h1 class="font-display text-2xl font-bold text-brand-950">
+          Participantes <span class="text-slate-400">({participantes?.length ?? 0})</span>
+        </h1>
+        <a href="/api/export" class="rounded-full bg-brand-600 px-5 py-2 text-sm font-semibold text-white transition hover:bg-brand-700">
+          ⬇ Exportar CSV
+        </a>
+      </div>
+
+      {
+        !participantes?.length ? (
+          <p class="mt-8 text-slate-500">Todavía no hay respuestas.</p>
+        ) : (
+          <div class="mt-6 overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <table class="w-full min-w-[900px] text-sm">
+              <thead class="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
+                <tr>
+                  <th class="px-4 py-3">Fecha</th>
+                  <th class="px-4 py-3">Correo</th>
+                  <th class="px-4 py-3">Género</th>
+                  <th class="px-4 py-3">Edad</th>
+                  <th class="px-4 py-3">Ciudad residencia</th>
+                  <th class="px-4 py-3">Nivel español</th>
+                  <th class="px-4 py-3">¿España?</th>
+                  <th class="px-4 py-3"></th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100">
+                {participantes.map((p) => (
+                  <tr class="hover:bg-slate-50">
+                    <td class="whitespace-nowrap px-4 py-3 text-slate-500">
+                      {new Date(p.created_at).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })}
+                    </td>
+                    <td class="px-4 py-3 font-medium text-slate-700">{p.email}</td>
+                    <td class="px-4 py-3">{p.genero ?? '—'}</td>
+                    <td class="px-4 py-3">{p.edad ?? '—'}</td>
+                    <td class="px-4 py-3">{p.ciudad_residencia ?? '—'}</td>
+                    <td class="px-4 py-3">{p.nivel_espanol ?? '—'}</td>
+                    <td class="px-4 py-3">{fmt(p.visitado_espana)}</td>
+                    <td class="px-4 py-3 text-right">
+                      <a href={`/admin/respuestas/${p.id}`} class="text-brand-600 hover:underline">Ver →</a>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )
+      }
+    </main>
+  </div>
+</Layout>

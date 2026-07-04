@@ -1,0 +1,161 @@
+---
+import ReproductorAudio from './ReproductorAudio.astro';
+import DiferencialSemantico from './DiferencialSemantico.astro';
+import {
+  ESCALA_VOZ,
+  ESCALA_PERSONA,
+  ESCALA_CULTURA,
+  PUESTOS_TRABAJO,
+  NIVELES_INGRESOS,
+  NIVELES_ESTUDIOS_PERCIBIDOS,
+  COMUNIDADES,
+  PROXIMIDAD_MIN_LABEL,
+  PROXIMIDAD_MAX_LABEL,
+  type Grabacion,
+} from '@/lib/config';
+
+export interface Props {
+  grabacion: Grabacion;
+  indice: number; // posición (1..N) para la barra de progreso
+  total: number;
+}
+const { grabacion, indice, total } = Astro.props;
+const p = `g${grabacion.numero}`; // prefijo de los name
+const proximidades = [1, 2, 3, 4, 5];
+---
+
+<section class="step" data-step-label={`Grabación ${grabacion.numero}`}>
+  <div class="mb-6">
+    <span class="inline-flex items-center rounded-full bg-brand-100 px-3 py-1 text-xs font-semibold text-brand-700">
+      Grabación {indice} de {total}
+    </span>
+    <h2 class="mt-2 font-display text-2xl font-bold text-brand-900">
+      Escucha y valora esta grabación
+    </h2>
+    <p class="mt-1 text-sm text-slate-500">
+      Escucha el audio las veces que necesites antes de responder.
+    </p>
+  </div>
+
+  <ReproductorAudio grabacion={grabacion} />
+
+  <!-- 1. Diferencial semántico de la voz -->
+  <div class="field">
+    <h3 class="field-title">
+      Valora los siguientes aspectos sobre la pronunciación que acabas de escuchar
+      <span class="req">*</span>
+    </h3>
+    <p class="field-help">
+      Señala el número que más se aproxime a tu apreciación (1 = adjetivo de la
+      izquierda, 5 = adjetivo de la derecha).
+    </p>
+    <DiferencialSemantico name={`${p}_voz`} items={ESCALA_VOZ} />
+  </div>
+
+  <div class="grid gap-6 sm:grid-cols-2">
+    <div class="field">
+      <label class="field-title" for={`${p}_gustado`}>
+        Un aspecto de la pronunciación que te haya gustado especialmente
+        <span class="req">*</span>
+      </label>
+      <input id={`${p}_gustado`} name={`${p}_aspecto_gustado`} type="text" class="input" required />
+    </div>
+    <div class="field">
+      <label class="field-title" for={`${p}_disgustado`}>
+        Un aspecto que te haya disgustado especialmente
+        <span class="req">*</span>
+      </label>
+      <input id={`${p}_disgustado`} name={`${p}_aspecto_disgustado`} type="text" class="input" required />
+    </div>
+  </div>
+
+  <!-- 2. Proximidad -->
+  <div class="field">
+    <h3 class="field-title">
+      Valora la proximidad entre tu pronunciación y la de la persona que habla
+      <span class="req">*</span>
+    </h3>
+    <div class="mt-2 flex items-center justify-between gap-2">
+      <span class="text-xs font-medium text-amber-700">{PROXIMIDAD_MIN_LABEL}</span>
+      <div class="flex flex-1 justify-between gap-1 px-2">
+        {
+          proximidades.map((v) => (
+            <label class="prox">
+              <input type="radio" name={`${p}_proximidad`} value={v} required class="peer sr-only" />
+              <span class="prox-dot">{v}</span>
+            </label>
+          ))
+        }
+      </div>
+      <span class="text-xs font-medium text-brand-700">{PROXIMIDAD_MAX_LABEL}</span>
+    </div>
+  </div>
+
+  <!-- 3. Percepción socioeconómica -->
+  <div class="field">
+    <h3 class="field-title">Consideras que la persona que habla tiene un puesto de trabajo<span class="req">*</span></h3>
+    <div class="pills">
+      {PUESTOS_TRABAJO.map((o) => (
+        <label class="pill">
+          <input type="radio" name={`${p}_puesto_trabajo`} value={o} required class="peer sr-only" />
+          <span>{o}</span>
+        </label>
+      ))}
+    </div>
+  </div>
+
+  <div class="field">
+    <h3 class="field-title">Consideras que la persona que habla tiene un nivel de ingresos<span class="req">*</span></h3>
+    <div class="pills">
+      {NIVELES_INGRESOS.map((o) => (
+        <label class="pill">
+          <input type="radio" name={`${p}_nivel_ingresos`} value={o} required class="peer sr-only" />
+          <span>{o}</span>
+        </label>
+      ))}
+    </div>
+  </div>
+
+  <div class="field">
+    <h3 class="field-title">¿Qué nivel de estudios crees que tiene la persona que habla?<span class="req">*</span></h3>
+    <div class="pills">
+      {NIVELES_ESTUDIOS_PERCIBIDOS.map((o) => (
+        <label class="pill">
+          <input type="radio" name={`${p}_nivel_estudios`} value={o} required class="peer sr-only" />
+          <span>{o}</span>
+        </label>
+      ))}
+    </div>
+  </div>
+
+  <!-- 4. Diferencial semántico de la persona -->
+  <div class="field">
+    <h3 class="field-title">En tu opinión, la persona que habla es<span class="req">*</span></h3>
+    <DiferencialSemantico name={`${p}_persona`} items={ESCALA_PERSONA} />
+  </div>
+
+  <!-- 5. Región percibida -->
+  <div class="field">
+    <label class="field-title" for={`${p}_region`}>
+      ¿De qué región (comunidad autónoma) crees que es la persona que habla?<span class="req">*</span>
+    </label>
+    <select id={`${p}_region`} name={`${p}_region_percibida`} class="input" required>
+      <option value="" disabled selected>Selecciona…</option>
+      {COMUNIDADES.map((c) => <option value={c}>{c}</option>)}
+    </select>
+  </div>
+
+  <div class="field">
+    <h3 class="field-title">¿Conoces personas de esta región?<span class="req">*</span></h3>
+    <div class="pills">
+      <label class="pill"><input type="radio" name={`${p}_conoce_personas_region`} value="si" required class="peer sr-only" /><span>Sí</span></label>
+      <label class="pill"><input type="radio" name={`${p}_conoce_personas_region`} value="no" required class="peer sr-only" /><span>No</span></label>
+    </div>
+  </div>
+
+  <!-- 6. Diferencial semántico de la cultura -->
+  <div class="field">
+    <h3 class="field-title">¿Qué opinión te merece la cultura de la que crees que la persona habla?<span class="req">*</span></h3>
+    <DiferencialSemantico name={`${p}_cultura`} items={ESCALA_CULTURA} />
+  </div>
+</section>
