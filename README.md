@@ -71,15 +71,29 @@ Abre `src/lib/config.ts` y edita el array `GRABACIONES`. Para cada una indica su
 `url`. Admite dos formatos:
 
 ```ts
-// MP3 alojado (p. ej. en Supabase Storage, ver abajo)
-{ numero: 1, titulo: 'Grabación 1', tipo: 'audio', url: 'https://.../muestra1.mp3' }
+// Audio alojado (p. ej. en Supabase Storage, ver abajo). Admite .ogg/.opus, .mp3, .m4a, .wav
+{ numero: 1, titulo: 'Grabación 1', tipo: 'audio', url: 'https://.../muestra1.ogg' }
+
+// Con audio de reserva para navegadores antiguos (opcional):
+{ numero: 1, titulo: 'Grabación 1', tipo: 'audio', url: 'https://.../muestra1.ogg', urlFallback: 'https://.../muestra1.m4a' }
 
 // Pista de SoundCloud
 { numero: 1, titulo: 'Grabación 1', tipo: 'soundcloud', url: 'https://soundcloud.com/usuario/pista' }
 ```
 
+**Formatos de audio.** El reproductor usa el elemento `<audio>` nativo, que
+admite **OGG/Opus** (el formato de los audios de WhatsApp), MP3, M4A/AAC y WAV.
+
+> 💡 Sube los **OGG originales sin convertir**: convertirlos a MP3 recodifica un
+> audio ya comprimido y puede introducir cortes y pérdida de calidad. OGG/Opus se
+> reproduce en Chrome, Edge, Firefox y Android. Safari/iPhone solo lo admite en
+> versiones recientes (Safari 17+); si necesitas cubrir iPhones antiguos, añade
+> además un `.m4a` (AAC) en `urlFallback`.
+
 **Opción recomendada — Supabase Storage:** en Supabase crea un bucket público
-`grabaciones`, sube los MP3 y pega la URL pública de cada archivo en la config.
+`grabaciones`, sube los audios (`.ogg` vale) y pega la URL pública de cada uno.
+Al subir, comprueba que el _content-type_ sea `audio/ogg` (Supabase lo suele
+inferir por la extensión).
 
 El número de grabaciones se controla con `NUM_GRABACIONES` (por defecto 12). Si
 lo cambias, el formulario, la base de datos de respuestas y las estadísticas se

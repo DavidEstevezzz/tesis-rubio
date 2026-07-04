@@ -23,7 +23,15 @@ export type Grabacion = {
   numero: number;
   titulo: string;
   tipo: 'audio' | 'soundcloud';
+  /** URL del audio principal. Admite .ogg/.opus (WhatsApp), .mp3, .m4a, .wav… */
   url: string;
+  /**
+   * (Opcional) URL de un audio de reserva en otro formato, por si el
+   * principal no es compatible con algún navegador. Ejemplo típico: subir el
+   * .ogg como `url` y un .m4a (AAC) como `urlFallback` para cubrir iPhones
+   * antiguos. El navegador elige automáticamente el primero que sepa reproducir.
+   */
+  urlFallback?: string;
 };
 
 export const GRABACIONES: Grabacion[] = Array.from(

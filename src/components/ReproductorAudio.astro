@@ -4,6 +4,21 @@ export interface Props {
   grabacion: Grabacion;
 }
 const { grabacion } = Astro.props;
+
+// Deduce el tipo MIME a partir de la extensión para que el navegador sepa
+// qué códec espera (importante con .ogg/.opus de WhatsApp).
+function mime(url: string): string | undefined {
+  const clean = url.split('?')[0].toLowerCase();
+  if (clean.endsWith('.ogg') || clean.endsWith('.opus')) return 'audio/ogg; codecs=opus';
+  if (clean.endsWith('.mp3')) return 'audio/mpeg';
+  if (clean.endsWith('.m4a') || clean.endsWith('.aac') || clean.endsWith('.mp4')) return 'audio/mp4';
+  if (clean.endsWith('.wav')) return 'audio/wav';
+  if (clean.endsWith('.webm')) return 'audio/webm';
+  return undefined;
+}
+
+const fuentes = [grabacion.url, grabacion.urlFallback].filter(Boolean) as string[];
+
 const soundcloudSrc =
   grabacion.tipo === 'soundcloud' && grabacion.url
     ? `https://w.soundcloud.com/player/?url=${encodeURIComponent(
@@ -23,8 +38,8 @@ const soundcloudSrc =
   {
     grabacion.tipo === 'audio' && grabacion.url && (
       <audio controls preload="none" class="w-full">
-        <source src={grabacion.url} />
-        Tu navegador no admite la reproducción de audio.
+        {fuentes.map((src) => <source src={src} type={mime(src)} />)}
+        Tu navegador no admite la reproducción de este audio.
       </audio>
     )
   }
