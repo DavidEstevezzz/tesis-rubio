@@ -34,14 +34,28 @@ export type Grabacion = {
   urlFallback?: string;
 };
 
+// Nombre del bucket público de Supabase Storage donde subes los audios.
+export const BUCKET_GRABACIONES = 'grabaciones';
+
+// Construye la URL pública de un archivo del bucket a partir de tu proyecto
+// Supabase (se toma de PUBLIC_SUPABASE_URL, así que no hay que repetirla).
+const SUPABASE_URL = import.meta.env.PUBLIC_SUPABASE_URL ?? '';
+export const storageUrl = (archivo: string) =>
+  `${SUPABASE_URL}/storage/v1/object/public/${BUCKET_GRABACIONES}/${archivo}`;
+
+// Las 12 grabaciones apuntan a  muestra1.ogg … muestra12.ogg  del bucket.
+// → Sube tus audios de WhatsApp a Supabase Storage con ESOS nombres exactos
+//   (bucket "grabaciones", público) y funcionarán sin tocar nada más.
+//   ¿Prefieres otros nombres o formatos? Cambia solo la línea `url` de abajo.
 export const GRABACIONES: Grabacion[] = Array.from(
   { length: NUM_GRABACIONES },
   (_, i) => ({
     numero: i + 1,
     titulo: `Grabación ${i + 1}`,
     tipo: 'audio' as const,
-    // Placeholder de ejemplo. Reemplázalo por el audio real.
-    url: '',
+    url: storageUrl(`muestra${i + 1}.ogg`),
+    // Opcional: descomenta para un audio de reserva (iPhones antiguos):
+    // urlFallback: storageUrl(`muestra${i + 1}.m4a`),
   })
 );
 
