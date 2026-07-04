@@ -158,7 +158,6 @@ const totalGrab = GRABACIONES.length;
                 </label>
               ))}
             </div>
-            <p class="error-msg">Selecciona al menos una opción.</p>
           </div>
 
           <div class="field">
@@ -337,7 +336,34 @@ const totalGrab = GRABACIONES.length;
 
     function clearErrors(step: HTMLElement) {
       step.querySelectorAll('.field-error').forEach((el) => el.classList.remove('field-error'));
-      step.querySelectorAll('.error-msg').forEach((el) => ((el as HTMLElement).style.display = 'none'));
+      step.querySelectorAll('.row-error').forEach((el) => el.classList.remove('row-error'));
+      step.querySelectorAll('.js-error').forEach((el) => el.remove());
+    }
+
+    // Localiza el "grupo" concreto que hay que resaltar (una fila de la escala,
+    // un grupo de botones, la barra de proximidad, una fila de idioma…).
+    function groupOf(el: Element): HTMLElement | null {
+      return (
+        (el.closest('.pills') as HTMLElement) ||
+        (el.closest('fieldset.diferencial-row') as HTMLElement) ||
+        (el.closest('.prox-group') as HTMLElement) ||
+        (el.closest('tr') as HTMLElement) ||
+        (el.closest('.field') as HTMLElement)
+      );
+    }
+
+    // Añade (una sola vez por apartado) un mensaje de aviso bajo el .field.
+    function addFieldMessage(el: Element, text: string) {
+      const field = (el.closest('.field') as HTMLElement) || (el.parentElement as HTMLElement);
+      if (!field) return;
+      field.classList.add('field-error');
+      if (!field.querySelector('.js-error')) {
+        const p = document.createElement('p');
+        p.className = 'error-msg js-error';
+        p.style.display = 'block';
+        p.innerHTML = `<span aria-hidden="true">⚠</span> ${text}`;
+        field.appendChild(p);
+      }
     }
 
     function validateStep(step: HTMLElement): boolean {
@@ -353,26 +379,27 @@ const totalGrab = GRABACIONES.length;
           const checked = step.querySelector(`input[name="${CSS.escape(el.name)}"]:checked`);
           if (!checked) {
             ok = false;
-            const group = el.closest('.pills') ?? el.closest('.field');
-            group?.classList.add('field-error');
-            firstInvalid = firstInvalid || (group as HTMLElement);
+            const group = groupOf(el);
+            group?.classList.add('row-error');
+            addFieldMessage(el, 'Falta por responder.');
+            firstInvalid = firstInvalid || group || (el as HTMLElement);
           }
         } else if (!el.value.trim()) {
           ok = false;
           el.classList.add('field-error');
+          addFieldMessage(el, 'Completa este campo.');
           firstInvalid = firstInvalid || (el as HTMLElement);
         }
       });
 
-      // Grupos de checkbox obligatorios
+      // Grupos de checkbox obligatorios (métodos de estudio)
       step.querySelectorAll<HTMLElement>('[data-required-group]').forEach((group) => {
         const name = group.dataset.requiredGroup!;
         const any = step.querySelector(`input[name="${CSS.escape(name)}"]:checked`);
         if (!any) {
           ok = false;
-          group.classList.add('field-error');
-          const msg = group.parentElement?.querySelector('.error-msg') as HTMLElement | null;
-          if (msg) msg.style.display = 'block';
+          group.classList.add('row-error');
+          addFieldMessage(group, 'Selecciona al menos una opción.');
           firstInvalid = firstInvalid || group;
         }
       });
@@ -382,6 +409,30 @@ const totalGrab = GRABACIONES.length;
       }
       return ok;
     }
+
+    // Limpia el error en cuanto el usuario responde a lo que faltaba.
+    function onFix(e: Event) {
+      const t = e.target as HTMLElement;
+      if (!t || !t.matches?.('input, select, textarea')) return;
+      const field = t.closest('.field') as HTMLElement | null;
+      if (!field) return;
+      const input = t as HTMLInputElement;
+      if (input.type === 'radio' || input.type === 'checkbox') {
+        const name = input.getAttribute('name');
+        if (name && field.querySelector(`input[name="${CSS.escape(name)}"]:checked`)) {
+          groupOf(input)?.classList.remove('row-error');
+        }
+      } else if (input.value.trim()) {
+        input.classList.remove('field-error');
+      }
+      // Si ya no queda nada marcado en el apartado, retira el aviso.
+      if (!field.querySelector('.row-error, .input.field-error')) {
+        field.classList.remove('field-error');
+        field.querySelectorAll('.js-error').forEach((n) => n.remove());
+      }
+    }
+    form.addEventListener('input', onFix, true);
+    form.addEventListener('change', onFix, true);
 
     btnNext.addEventListener('click', () => {
       if (!validateStep(steps[current])) return;
