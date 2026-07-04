@@ -23,7 +23,7 @@ const valores = Array.from(
   <!-- Cabecera con la guía de puntuación -->
   <div class="hidden sm:grid diferencial-row diferencial-head">
     <div></div>
-    <div class="grid grid-cols-5">
+    <div class="opts">
       {valores.map((v) => <span class="col-num">{v}</span>)}
     </div>
     <div></div>
@@ -40,7 +40,7 @@ const valores = Array.from(
           {item.negativo}
         </div>
 
-        <div class="grid grid-cols-5 opts">
+        <div class="opts">
           {valores.map((v) => (
             <label class="opt" title={`${v}`}>
               <input
@@ -131,8 +131,17 @@ const valores = Array.from(
     background: #dbeafe;
     color: #1a51dd;
   }
+  /* Misma rejilla y MISMO ancho en la cabecera de números y en las filas,
+     para que cada número quede justo encima de su círculo. */
   .opts {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
     gap: 0.15rem;
+    width: 13.5rem;
+    justify-self: center;
+  }
+  .col-num {
+    text-align: center;
   }
   .opt {
     display: flex;
@@ -176,7 +185,7 @@ const valores = Array.from(
       flex-direction: row-reverse;
     }
     .opts {
-      justify-content: space-between;
+      width: 100%;
       padding: 0.2rem 0;
     }
   }
