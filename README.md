@@ -91,19 +91,19 @@ Todo vive en `src/lib/config.ts`: adjetivos de las escalas, géneros, niveles
 educativos, métodos de estudio, comunidades autónomas, etc. Cambia ahí y el
 resto de la app se actualiza sola.
 
-## 🌐 Despliegue
+## 🌐 Despliegue en Vercel
 
-Usa el adaptador `@astrojs/node` (standalone), así que se despliega en cualquier
-sitio que ejecute Node (Railway, Render, Fly.io, un VPS…):
+El proyecto usa el adaptador `@astrojs/vercel` (SSR). Pasos (ya con cuenta):
 
-```bash
-npm run build
-node ./dist/server/entry.mjs   # define las variables de entorno en el host
-```
+1. Sube el repositorio a GitHub (si no lo está ya).
+2. En [vercel.com](https://vercel.com) → **Add New… → Project** → importa el repo.
+3. Vercel detecta Astro solo. No cambies el _framework preset_ ni los comandos.
+4. En **Environment Variables** añade las 3 claves (mismos nombres que en `.env`):
+   `PUBLIC_SUPABASE_URL`, `PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`.
+5. **Deploy**. Cada `git push` vuelve a desplegar automáticamente.
 
-Para hosting serverless (Vercel/Netlify) cambia el adaptador en
-`astro.config.mjs`. Recuerda definir las 3 variables de entorno en el panel del
-proveedor (la `service_role` como secreta).
+> ¿Prefieres un host con Node (Railway, Render, un VPS)? Cambia el adaptador a
+> `@astrojs/node` en `astro.config.mjs` y arranca con `node ./dist/server/entry.mjs`.
 
 ## 🔐 Notas de seguridad
 
