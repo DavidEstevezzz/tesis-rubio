@@ -141,15 +141,15 @@ const hayDatos = stats.resumen.totalParticipantes > 0;
   <script>
     import Chart from 'chart.js/auto';
 
+    const BRAND = '#1f66f0';
+    const ACCENT = '#ff7a2f';
+    const PALETTE = ['#1f66f0', '#ff7a2f', '#22c55e', '#a855f7', '#eab308', '#06b6d4', '#ef4444', '#64748b'];
+
     const el = document.getElementById('stats-data');
     if (el && el.textContent) {
       const stats = JSON.parse(el.textContent);
       initCharts(stats);
     }
-
-    const BRAND = '#1f66f0';
-    const ACCENT = '#ff7a2f';
-    const PALETTE = ['#1f66f0', '#ff7a2f', '#22c55e', '#a855f7', '#eab308', '#06b6d4', '#ef4444', '#64748b'];
 
     function initCharts(stats: any) {
       Chart.defaults.font.family = 'Inter, system-ui, sans-serif';
