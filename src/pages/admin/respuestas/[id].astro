@@ -29,16 +29,23 @@ const datos: [string, any][] = [
   ['Lenguas maternas', p.lenguas_maternas],
   ['Otros idiomas', Object.entries(p.otros_idiomas ?? {}).map(([k, v]) => `${k}: ${v}`).join(', ') || '—'],
   ['¿Estudia?', fmt(p.estudia)],
+  ['¿Qué estudia?', p.que_estudias],
   ['¿Trabaja?', fmt(p.trabaja)],
+  ['¿Cuál es su trabajo?', p.cual_trabajo],
   ['Nivel educativo', p.nivel_educativo],
   ['Años de estudio del español', p.anios_estudio_espanol],
   ['Métodos de estudio', (p.metodos_estudio ?? []).join(', ') || '—'],
   ['Ejemplos de métodos', p.metodos_ejemplos],
   ['Nivel en español', p.nivel_espanol],
   ['¿Familia en España?', fmt(p.familia_espana)],
+  ['Zonas (familia en España)', p.familia_espana_zonas],
   ['¿Ha visitado España?', fmt(p.visitado_espana)],
+  ['Tiempo de estancia (España)', p.visitado_espana_tiempo],
+  ['Zonas visitadas (España)', p.visitado_espana_zonas],
   ['Mejor región (opinión)', p.mejor_region_opinion],
   ['¿Otros países hispanohablantes?', fmt(p.visitado_otros_paises)],
+  ['¿Cuáles países?', p.visitado_otros_paises_cuales],
+  ['Tiempo de estancia (otros países)', p.visitado_otros_paises_tiempo],
   ['¿Trato diferenciado Mariam/Omar?', fmt(p.trato_diferenciado)],
   ['¿Diferente con jefa mujer?', fmt(p.trato_mujer_diferente)],
   ['Actitud según género (texto)', p.actitud_genero_influye],
@@ -85,7 +92,7 @@ const datos: [string, any][] = [
               <div><dt class="text-slate-400">Cultura</dt><dd class="text-slate-700">{escalaTxt(v.escala_cultura, ESCALA_CULTURA)}</dd></div>
               <div><dt class="text-slate-400">Proximidad</dt><dd class="text-slate-700">{v.proximidad ?? '—'} / 5</dd></div>
               <div><dt class="text-slate-400">Puesto / Ingresos / Estudios</dt><dd class="text-slate-700">{v.puesto_trabajo ?? '—'} · {v.nivel_ingresos ?? '—'} · {v.nivel_estudios ?? '—'}</dd></div>
-              <div><dt class="text-slate-400">Región percibida</dt><dd class="text-slate-700">{v.region_percibida ?? '—'} {v.conoce_personas_region != null ? `(conoce: ${fmt(v.conoce_personas_region)})` : ''}</dd></div>
+              <div><dt class="text-slate-400">Región percibida</dt><dd class="text-slate-700">{v.region_percibida ?? '—'} {v.conoce_personas_region != null ? `(conoce: ${fmt(v.conoce_personas_region)})` : ''}{v.conoce_personas_region_opinion ? ` — ${v.conoce_personas_region_opinion}` : ''}</dd></div>
               <div class="sm:col-span-2"><dt class="text-slate-400">Gustó / Disgustó</dt><dd class="text-slate-700">👍 {v.aspecto_gustado ?? '—'} — 👎 {v.aspecto_disgustado ?? '—'}</dd></div>
             </dl>
           </div>

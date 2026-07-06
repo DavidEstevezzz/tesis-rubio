@@ -105,14 +105,17 @@ const valores = Array.from(
     align-items: center;
     gap: 0.4rem;
   }
+  /* Ambos polos comparten el MISMO color (neutro): no marcamos el lado
+     izquierdo como "negativo" ni el derecho como "positivo" con color, para
+     no condicionar la elección de los informantes. */
   .pole-neg {
     justify-content: flex-start;
-    color: #b45309;
+    color: #334155;
   }
   .pole-pos {
     justify-content: flex-end;
     text-align: right;
-    color: #1a51dd;
+    color: #334155;
   }
   .pole-badge {
     display: inline-flex;
@@ -121,15 +124,15 @@ const valores = Array.from(
     width: 1.25rem;
     height: 1.25rem;
     border-radius: 9999px;
-    background: #fef3c7;
-    color: #b45309;
+    background: #e2e8f0;
+    color: #475569;
     font-size: 0.7rem;
     font-weight: 700;
     flex: none;
   }
   .pole-badge-pos {
-    background: #dbeafe;
-    color: #1a51dd;
+    background: #e2e8f0;
+    color: #475569;
   }
   /* Misma rejilla y MISMO ancho en la cabecera de números y en las filas,
      para que cada número quede justo encima de su círculo. */

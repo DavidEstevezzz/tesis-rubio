@@ -17,9 +17,12 @@ export const GET: APIRoute = async () => {
 
   const pCols = [
     'email', 'genero', 'genero_otro', 'edad', 'ciudad_nacimiento', 'ciudad_residencia',
-    'lenguas_maternas', 'estudia', 'trabaja', 'nivel_educativo', 'anios_estudio_espanol',
+    'lenguas_maternas', 'estudia', 'que_estudias', 'trabaja', 'cual_trabajo',
+    'nivel_educativo', 'anios_estudio_espanol',
     'metodos_estudio', 'metodos_ejemplos', 'nivel_espanol', 'familia_espana',
-    'visitado_espana', 'mejor_region_opinion', 'visitado_otros_paises',
+    'familia_espana_zonas', 'visitado_espana', 'visitado_espana_tiempo',
+    'visitado_espana_zonas', 'mejor_region_opinion', 'visitado_otros_paises',
+    'visitado_otros_paises_cuales', 'visitado_otros_paises_tiempo',
     'trato_diferenciado', 'trato_mujer_diferente', 'actitud_genero_influye',
   ];
 
@@ -34,7 +37,7 @@ export const GET: APIRoute = async () => {
     'aspecto_gustado', 'aspecto_disgustado', 'proximidad',
     'puesto_trabajo', 'nivel_ingresos', 'nivel_estudios',
     ...personaCols,
-    'region_percibida', 'conoce_personas_region',
+    'region_percibida', 'conoce_personas_region', 'conoce_personas_region_opinion',
     ...culturaCols,
     'fecha',
   ];
@@ -50,7 +53,7 @@ export const GET: APIRoute = async () => {
     cells.push(v.aspecto_gustado, v.aspecto_disgustado, v.proximidad ?? '');
     cells.push(v.puesto_trabajo ?? '', v.nivel_ingresos ?? '', v.nivel_estudios ?? '');
     for (const i of ESCALA_PERSONA) cells.push((v.escala_persona ?? {})[i.id] ?? '');
-    cells.push(v.region_percibida ?? '', fmtBool(v.conoce_personas_region));
+    cells.push(v.region_percibida ?? '', fmtBool(v.conoce_personas_region), v.conoce_personas_region_opinion ?? '');
     for (const i of ESCALA_CULTURA) cells.push((v.escala_cultura ?? {})[i.id] ?? '');
     cells.push(v.created_at);
     rows.push(cells.map(csvCell).join(','));

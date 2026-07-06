@@ -99,12 +99,11 @@ export const ESCALA_CULTURA: ItemDiferencial[] = [
 export const GENEROS = ['Femenino', 'Masculino', 'Prefiero no decirlo', 'Otro'];
 
 export const NIVELES_EDUCATIVOS = [
-  'Sin estudios',
   'Educación primaria',
-  'Educación secundaria (ESO)',
+  'Educación secundaria',
   'Bachillerato',
   'Formación profesional',
-  'Grado universitario',
+  'Licencia/Grado universitario',
   'Máster o posgrado',
   'Doctorado',
 ];
@@ -157,3 +156,12 @@ export const COMUNIDADES = [
 // Etiquetas de los extremos de la escala de proximidad de pronunciación.
 export const PROXIMIDAD_MIN_LABEL = 'Totalmente diferente';
 export const PROXIMIDAD_MAX_LABEL = 'Idéntica';
+
+// Opciones de la tabla "Tiempo de estancia (frecuencia habitual)".
+export const TIEMPO_ESTANCIA = [
+  'Menos de 1 mes',
+  '1-3 meses',
+  '3 meses-1 año',
+  '1-3 años',
+  'Más de 3 años',
+];
