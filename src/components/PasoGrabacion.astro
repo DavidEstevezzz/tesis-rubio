@@ -32,6 +32,12 @@ const proximidades = [1, 2, 3, 4, 5];
     <h2 class="mt-2 font-display text-2xl font-bold text-brand-900">
       Escucha y valora esta grabación
     </h2>
+    {indice === 1 && (
+      <p class="mt-3 rounded-xl border border-brand-100 bg-brand-50/60 p-3 text-sm text-slate-600">
+        Vas a escuchar doce audios diferentes en los que el jefe de un hotel se
+        dirige a dos de sus empleados (Mariam y Omar).
+      </p>
+    )}
     <p class="mt-1 text-sm text-slate-500">
       Escucha el audio las veces que necesites antes de responder.
     </p>
@@ -55,14 +61,14 @@ const proximidades = [1, 2, 3, 4, 5];
   <div class="grid gap-6 sm:grid-cols-2">
     <div class="field">
       <label class="field-title" for={`${p}_gustado`}>
-        Un aspecto de la pronunciación que te haya gustado especialmente
+        Señala un aspecto de la pronunciación que te haya gustado especialmente
         <span class="req">*</span>
       </label>
       <input id={`${p}_gustado`} name={`${p}_aspecto_gustado`} type="text" class="input" required />
     </div>
     <div class="field">
       <label class="field-title" for={`${p}_disgustado`}>
-        Un aspecto que te haya disgustado especialmente
+        Señala un aspecto de la pronunciación que te haya disgustado especialmente
         <span class="req">*</span>
       </label>
       <input id={`${p}_disgustado`} name={`${p}_aspecto_disgustado`} type="text" class="input" required />
@@ -155,9 +161,16 @@ const proximidades = [1, 2, 3, 4, 5];
     </div>
   </div>
 
+  <div class="conditional hidden" data-show-when={`${p}_conoce_personas_region`} data-show-value="si">
+    <div class="field">
+      <label class="field-title" for={`${p}_conoce_opinion`}>¿Qué opinión tienes sobre ella?<span class="req">*</span></label>
+      <input id={`${p}_conoce_opinion`} name={`${p}_conoce_personas_region_opinion`} type="text" class="input" required />
+    </div>
+  </div>
+
   <!-- 6. Diferencial semántico de la cultura -->
   <div class="field">
-    <h3 class="field-title">¿Qué opinión te merece la cultura de la que crees que la persona habla?<span class="req">*</span></h3>
+    <h3 class="field-title">¿Qué opinión te merece la cultura de la que crees que es la persona que habla?<span class="req">*</span></h3>
     <DiferencialSemantico name={`${p}_cultura`} items={ESCALA_CULTURA} />
   </div>
 </section>

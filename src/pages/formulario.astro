@@ -1,6 +1,7 @@
 ---
 import Layout from '@/layouts/Layout.astro';
 import PasoGrabacion from '@/components/PasoGrabacion.astro';
+import TablaFrecuencia from '@/components/TablaFrecuencia.astro';
 import {
   GRABACIONES,
   GENEROS,
@@ -125,6 +126,20 @@ const totalGrab = GRABACIONES.length;
             </div>
           </div>
 
+          <div class="conditional hidden" data-show-when="estudia" data-show-value="si">
+            <div class="field">
+              <label class="field-title" for="que_estudias">¿Qué estudias?<span class="req">*</span></label>
+              <input id="que_estudias" name="que_estudias" type="text" class="input" placeholder="Describe detalladamente" required />
+            </div>
+          </div>
+
+          <div class="conditional hidden" data-show-when="trabaja" data-show-value="si">
+            <div class="field">
+              <label class="field-title" for="cual_trabajo">¿Cuál es tu trabajo?<span class="req">*</span></label>
+              <input id="cual_trabajo" name="cual_trabajo" type="text" class="input" placeholder="Describe detalladamente" required />
+            </div>
+          </div>
+
           <div class="field">
             <label class="field-title" for="nivel_educativo">Nivel educativo<span class="req">*</span></label>
             <select id="nivel_educativo" name="nivel_educativo" class="input" required>
@@ -156,8 +171,9 @@ const totalGrab = GRABACIONES.length;
               practicar español<span class="req">*</span>
             </label>
             <p class="field-help">
-              Hablar con un amigo, ver telenovelas en español, interactuar con
-              turistas, leer libros, preparar clases, escuchar música, etc.
+              (Hablar o escribir con un amigo, ver telenovelas en español,
+              interactuar con turistas, leer libros, preparar clases, escuchar
+              música, etc.)
             </p>
             <textarea id="metodos_ejemplos" name="metodos_ejemplos" class="input" required></textarea>
           </div>
@@ -187,6 +203,21 @@ const totalGrab = GRABACIONES.length;
             </div>
           </div>
 
+          <div class="conditional hidden" data-show-when="familia_espana" data-show-value="si">
+            <div class="field">
+              <label class="field-title" for="familia_espana_zonas">Indica las zonas<span class="req">*</span></label>
+              <input id="familia_espana_zonas" name="familia_espana_zonas" type="text" class="input" required />
+            </div>
+          </div>
+
+          <div class="conditional hidden" data-show-when="visitado_espana" data-show-value="si">
+            <TablaFrecuencia name="visitado_espana_tiempo" />
+            <div class="field">
+              <label class="field-title" for="visitado_espana_zonas">Señala las zonas visitadas<span class="req">*</span></label>
+              <input id="visitado_espana_zonas" name="visitado_espana_zonas" type="text" class="input" required />
+            </div>
+          </div>
+
           <div class="field">
             <label class="field-title" for="mejor_region_opinion">
               En tu opinión, ¿en qué región o zona de España se habla mejor? Justifica
@@ -201,6 +232,14 @@ const totalGrab = GRABACIONES.length;
               <label class="pill"><input type="radio" name="visitado_otros_paises" value="si" required class="peer sr-only" /><span>Sí</span></label>
               <label class="pill"><input type="radio" name="visitado_otros_paises" value="no" required class="peer sr-only" /><span>No</span></label>
             </div>
+          </div>
+
+          <div class="conditional hidden" data-show-when="visitado_otros_paises" data-show-value="si">
+            <div class="field">
+              <label class="field-title" for="visitado_otros_paises_cuales">Indica cuál(es)<span class="req">*</span></label>
+              <input id="visitado_otros_paises_cuales" name="visitado_otros_paises_cuales" type="text" class="input" required />
+            </div>
+            <TablaFrecuencia name="visitado_otros_paises_tiempo" />
           </div>
         </div>
       </section>
@@ -346,6 +385,8 @@ const totalGrab = GRABACIONES.length;
       const seenRadios = new Set<string>();
 
       step.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>('[required]').forEach((el) => {
+        // Ignora los campos dentro de un bloque condicional que está oculto.
+        if (el.closest('.conditional.hidden')) return;
         if (el instanceof HTMLInputElement && el.type === 'radio') {
           if (seenRadios.has(el.name)) return;
           seenRadios.add(el.name);
@@ -419,6 +460,36 @@ const totalGrab = GRABACIONES.length;
         current--;
         render();
       }
+    });
+
+    // ── Bloques condicionales (aparecen según la respuesta a una pregunta) ──
+    // Uso: <div class="conditional hidden" data-show-when="nombre" data-show-value="si">
+    form.querySelectorAll<HTMLElement>('.conditional[data-show-when]').forEach((block) => {
+      const name = block.dataset.showWhen!;
+      const wanted = block.dataset.showValue ?? 'si';
+      const update = () => {
+        const checked = form.querySelector<HTMLInputElement>(
+          `input[name="${CSS.escape(name)}"]:checked`
+        );
+        const show = !!checked && checked.value === wanted;
+        block.classList.toggle('hidden', !show);
+        if (!show) {
+          // Al ocultarse, limpia valores y errores para no enviar datos ni
+          // bloquear la validación con campos invisibles.
+          block.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>('input, select, textarea').forEach((i) => {
+            if (i instanceof HTMLInputElement && (i.type === 'radio' || i.type === 'checkbox')) i.checked = false;
+            else i.value = '';
+          });
+          block.querySelectorAll('.field-error, .row-error').forEach((e) =>
+            e.classList.remove('field-error', 'row-error')
+          );
+          block.querySelectorAll('.js-error').forEach((e) => e.remove());
+        }
+      };
+      form.querySelectorAll<HTMLInputElement>(`input[name="${CSS.escape(name)}"]`).forEach((r) =>
+        r.addEventListener('change', update)
+      );
+      update();
     });
 
     // Campo "Otro" del género

@@ -1,0 +1,123 @@
+---
+import { TIEMPO_ESTANCIA } from '@/lib/config';
+
+export interface Props {
+  /** name de los radios de la fila "Frecuencia". */
+  name: string;
+  required?: boolean;
+}
+const { name, required = true } = Astro.props;
+---
+
+<div class="field">
+  <h3 class="field-title">
+    Tiempo de estancia (frecuencia habitual){required && <span class="req">*</span>}
+  </h3>
+  <div class="tabla-frec-scroll">
+    <table class="tabla-frec">
+      <thead>
+        <tr>
+          <th class="esquina"></th>
+          {TIEMPO_ESTANCIA.map((t) => <th scope="col">{t}</th>)}
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th scope="row" class="fila-lbl">Frecuencia</th>
+          {TIEMPO_ESTANCIA.map((t) => (
+            <td>
+              <label class="frec-opt" title={t}>
+                <input type="radio" name={name} value={t} required={required} class="peer sr-only" />
+                <span class="frec-dot" aria-hidden="true"></span>
+              </label>
+            </td>
+          ))}
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<style>
+  .tabla-frec-scroll {
+    margin-top: 0.6rem;
+    overflow-x: auto;
+  }
+  .tabla-frec {
+    border-collapse: separate;
+    border-spacing: 0;
+    width: 100%;
+    min-width: 34rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.75rem;
+    overflow: hidden;
+  }
+  .tabla-frec th,
+  .tabla-frec td {
+    border-right: 1px solid #e2e8f0;
+    border-bottom: 1px solid #e2e8f0;
+    padding: 0.55rem 0.5rem;
+    text-align: center;
+  }
+  .tabla-frec thead th {
+    background: #eef4ff;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #1d3c8d;
+    line-height: 1.2;
+  }
+  .tabla-frec tbody th.fila-lbl {
+    background: #f8fafc;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #334155;
+    text-align: left;
+    white-space: nowrap;
+  }
+  .tabla-frec .esquina {
+    background: #eef4ff;
+  }
+  .tabla-frec tr > *:last-child {
+    border-right: 0;
+  }
+  .tabla-frec tbody tr:last-child > * {
+    border-bottom: 0;
+  }
+  .frec-opt {
+    display: inline-flex;
+    cursor: pointer;
+  }
+  .frec-dot {
+    display: block;
+    width: 1.4rem;
+    height: 1.4rem;
+    border-radius: 9999px;
+    border: 2px solid #cbd5e1;
+    background: #fff;
+    transition: all 0.12s ease;
+  }
+  .frec-opt:hover .frec-dot {
+    border-color: #59a6ff;
+    transform: scale(1.08);
+  }
+  .peer:checked + .frec-dot {
+    border-color: #1f66f0;
+    background: #1f66f0;
+    box-shadow: 0 0 0 4px rgba(31, 102, 240, 0.15);
+  }
+  .peer:focus-visible + .frec-dot {
+    outline: 2px solid #1f66f0;
+    outline-offset: 2px;
+  }
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+</style>

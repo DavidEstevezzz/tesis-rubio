@@ -18,16 +18,23 @@ create table if not exists public.participantes (
   lenguas_maternas            text,
   otros_idiomas               jsonb default '{}'::jsonb,  -- { "Inglés": "Avanzado", ... }
   estudia                     boolean,
+  que_estudias                text,      -- si estudia = true
   trabaja                     boolean,
+  cual_trabajo                text,      -- si trabaja = true
   nivel_educativo             text,
   anios_estudio_espanol       int,
   metodos_estudio             text[] default '{}',
   metodos_ejemplos            text,
   nivel_espanol               text,
   familia_espana              boolean,
+  familia_espana_zonas        text,      -- si familia_espana = true
   visitado_espana             boolean,
+  visitado_espana_tiempo      text,      -- tiempo de estancia (frecuencia habitual)
+  visitado_espana_zonas       text,      -- zonas visitadas en España
   mejor_region_opinion        text,
   visitado_otros_paises       boolean,
+  visitado_otros_paises_cuales text,     -- qué país(es) hispanohablante(s)
+  visitado_otros_paises_tiempo text,     -- tiempo de estancia (frecuencia habitual)
 
   -- Preguntas globales sobre el género de quien habla (una vez, al final)
   trato_diferenciado          boolean,   -- ¿trato diferenciado entre Mariam y Omar?
@@ -61,6 +68,7 @@ create table if not exists public.valoraciones (
 
   region_percibida       text,    -- comunidad autónoma
   conoce_personas_region boolean,
+  conoce_personas_region_opinion text,  -- opinión si conoce personas de la región
 
   -- Diferencial semántico de la CULTURA (6 ítems, 1-5)
   escala_cultura         jsonb not null default '{}'::jsonb,
@@ -72,6 +80,18 @@ create table if not exists public.valoraciones (
 
 create index if not exists idx_valoraciones_participante on public.valoraciones(participante_id);
 create index if not exists idx_valoraciones_grabacion on public.valoraciones(grabacion);
+
+-- ── Migración de columnas añadidas (seguro re-ejecutar en una BD existente) ──
+-- Si ya creaste las tablas antes de estos campos, este bloque las añade sin
+-- borrar nada. Si es una instalación nueva, no hace falta (ya están arriba).
+alter table public.participantes add column if not exists que_estudias                 text;
+alter table public.participantes add column if not exists cual_trabajo                 text;
+alter table public.participantes add column if not exists familia_espana_zonas         text;
+alter table public.participantes add column if not exists visitado_espana_tiempo       text;
+alter table public.participantes add column if not exists visitado_espana_zonas        text;
+alter table public.participantes add column if not exists visitado_otros_paises_cuales text;
+alter table public.participantes add column if not exists visitado_otros_paises_tiempo text;
+alter table public.valoraciones  add column if not exists conoce_personas_region_opinion text;
 
 -- ═══════════════════════════════════════════════════════════════════════════
 --  SEGURIDAD (Row Level Security)
