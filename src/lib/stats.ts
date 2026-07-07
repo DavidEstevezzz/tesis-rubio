@@ -13,6 +13,7 @@ import {
   NIVELES_INGRESOS,
   NIVELES_ESTUDIOS_PERCIBIDOS,
   COMUNIDADES,
+  TIEMPO_ESTANCIA,
   type ItemDiferencial,
 } from './config';
 
@@ -93,6 +94,16 @@ export function computeStats(participantes: Participante[], valoraciones: Valora
     visitadoOtros: boolCount(participantes, 'visitado_otros_paises'),
   };
 
+  // Tiempo de estancia (frecuencia habitual), solo entre quienes visitaron.
+  const tiempoEstanciaEspana = distribucion(
+    countBy(participantes, (p) => p.visitado_espana_tiempo),
+    TIEMPO_ESTANCIA
+  );
+  const tiempoEstanciaOtros = distribucion(
+    countBy(participantes, (p) => p.visitado_otros_paises_tiempo),
+    TIEMPO_ESTANCIA
+  );
+
   // ── Por grabación ──
   const porGrabacion = GRABACIONES.map((g) => {
     const vals = valoraciones.filter((v) => v.grabacion === g.numero);
@@ -135,6 +146,9 @@ export function computeStats(participantes: Participante[], valoraciones: Valora
     ['1', '2', '3', '4', '5']
   );
 
+  // ¿Conoce a personas de la región percibida? (por valoración)
+  const conocePersonasRegion = boolCount(valoraciones, 'conoce_personas_region');
+
   // ── Preguntas de género (globales, por participante) ──
   const genero_preguntas = {
     tratoDiferenciado: boolCount(participantes, 'trato_diferenciado'),
@@ -153,7 +167,15 @@ export function computeStats(participantes: Participante[], valoraciones: Valora
       edadMedia: edades.length ? round(avg(edades), 1) : null,
       proximidadMedia: avg(valoraciones.map((v) => Number(v.proximidad))),
     },
-    demografia: { genero, nivelEspanol, edadHist, tramos, contexto },
+    demografia: {
+      genero,
+      nivelEspanol,
+      edadHist,
+      tramos,
+      contexto,
+      tiempoEstanciaEspana,
+      tiempoEstanciaOtros,
+    },
     global: {
       voz: vozGlobal,
       persona: personaGlobal,
@@ -163,6 +185,7 @@ export function computeStats(participantes: Participante[], valoraciones: Valora
       ingresos: ingresosGlobal,
       estudios: estudiosGlobal,
       proximidadDist,
+      conocePersonasRegion,
     },
     porGrabacion,
     ranking,

@@ -102,6 +102,12 @@ const hayDatos = stats.resumen.totalParticipantes > 0;
                 <div class="chart-box"><canvas id="chartRegion"></canvas></div>
               </div>
 
+              <div class="card">
+                <h2 class="card-title">¿Conoce personas de la región percibida?</h2>
+                <p class="card-sub">Sobre el total de valoraciones.</p>
+                <div class="chart-box"><canvas id="chartConoceRegion"></canvas></div>
+              </div>
+
               <!-- Demografía -->
               <div class="card">
                 <h2 class="card-title">Género de los participantes</h2>
@@ -114,6 +120,17 @@ const hayDatos = stats.resumen.totalParticipantes > 0;
               <div class="card">
                 <h2 class="card-title">Edad de los participantes</h2>
                 <div class="chart-box"><canvas id="chartEdad"></canvas></div>
+              </div>
+
+              <div class="card">
+                <h2 class="card-title">Tiempo de estancia en España</h2>
+                <p class="card-sub">Frecuencia habitual, entre quienes han visitado España.</p>
+                <div class="chart-box"><canvas id="chartTiempoEspana"></canvas></div>
+              </div>
+              <div class="card">
+                <h2 class="card-title">Tiempo de estancia en otros países hispanohablantes</h2>
+                <p class="card-sub">Frecuencia habitual, entre quienes los han visitado.</p>
+                <div class="chart-box"><canvas id="chartTiempoOtros"></canvas></div>
               </div>
 
               <div class="card lg:col-span-2">
@@ -198,6 +215,20 @@ const hayDatos = stats.resumen.totalParticipantes > 0;
         type: 'bar',
         data: { labels: reg.labels, datasets: [{ data: reg.data, backgroundColor: PALETTE[3], borderRadius: 5 }] },
         options: { ...baseBar(), indexAxis: 'y' },
+      });
+
+      siNo('chartConoceRegion', stats.global.conocePersonasRegion);
+
+      // Tiempo de estancia (frecuencia habitual), en barras
+      new Chart(byId('chartTiempoEspana'), {
+        type: 'bar',
+        data: { labels: stats.demografia.tiempoEstanciaEspana.labels, datasets: [{ data: stats.demografia.tiempoEstanciaEspana.data, backgroundColor: PALETTE[5], borderRadius: 6 }] },
+        options: baseBar(),
+      });
+      new Chart(byId('chartTiempoOtros'), {
+        type: 'bar',
+        data: { labels: stats.demografia.tiempoEstanciaOtros.labels, datasets: [{ data: stats.demografia.tiempoEstanciaOtros.data, backgroundColor: PALETTE[3], borderRadius: 6 }] },
+        options: baseBar(),
       });
 
       doughnut('chartGenero', stats.demografia.genero);
