@@ -18,9 +18,11 @@ export const prerender = false;
 
 // ── Diseño de bloques incompletos balanceados (BIBD) ────────────────────────
 // A cada participante se le asigna una "versión" del formulario (un bloque de
-// grabaciones equilibrado norte/sur). Repartimos de forma rotatoria según el
-// número de participantes ya registrados, así todas las versiones —y por tanto
-// todas las grabaciones— reciben aproximadamente el mismo número de respuestas.
+// grabaciones equilibrado norte/sur). Para que TODOS los audios reciban el
+// mismo número de escuchas, asignamos la versión con MENOS participantes
+// completados hasta el momento (empates → al azar). Como cada grabación está en
+// exactamente 3 de las 6 versiones, igualar las versiones iguala las escuchas
+// por audio, y el reparto se autocorrige ante ráfagas o abandonos.
 // Se puede forzar una versión concreta con ?bloque=N (útil para previsualizar).
 let version = 1;
 const forzado = Number(Astro.url.searchParams.get('bloque'));
@@ -30,10 +32,19 @@ if (NUM_BLOQUES > 1) {
   } else {
     try {
       const supabase = getServiceClient();
-      const { count } = await supabase
-        .from('participantes')
-        .select('*', { count: 'exact', head: true });
-      version = ((count ?? 0) % NUM_BLOQUES) + 1;
+      // Nº de participantes ya completados en cada versión.
+      const { data } = await supabase.from('participantes').select('bloque');
+      const conteo = new Array(NUM_BLOQUES).fill(0);
+      for (const row of data ?? []) {
+        const b = Number(row.bloque);
+        if (b >= 1 && b <= NUM_BLOQUES) conteo[b - 1]++;
+      }
+      // Versión(es) con el menor recuento; si hay empate, se elige al azar.
+      const minN = Math.min(...conteo);
+      const candidatas = conteo
+        .map((n, i) => (n === minN ? i + 1 : 0))
+        .filter((v) => v > 0);
+      version = candidatas[Math.floor(Math.random() * candidatas.length)] ?? 1;
     } catch {
       // Si no hay conexión/clave, repartimos al azar para no bloquear el formulario.
       version = Math.floor(Math.random() * NUM_BLOQUES) + 1;

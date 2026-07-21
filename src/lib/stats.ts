@@ -150,6 +150,17 @@ export function computeStats(participantes: Participante[], valoraciones: Valora
     n: participantes.filter((p) => Number(p.bloque) === b.version).length,
   }));
 
+  // ── Equilibrio de escuchas por audio (nº de valoraciones de cada grabación) ──
+  const escuchasPorAudio = porGrabacion.map((g) => ({ numero: g.numero, n: g.n }));
+  const cuentas = escuchasPorAudio.map((e) => e.n);
+  const equilibrio = {
+    porAudio: escuchasPorAudio,
+    min: cuentas.length ? Math.min(...cuentas) : 0,
+    max: cuentas.length ? Math.max(...cuentas) : 0,
+    // Brecha máx–min: 0 = perfectamente equilibrado.
+    brecha: cuentas.length ? Math.max(...cuentas) - Math.min(...cuentas) : 0,
+  };
+
   // Ranking de grabaciones por agradabilidad de la voz
   const ranking = [...porGrabacion]
     .filter((g) => g.n > 0)
@@ -177,6 +188,7 @@ export function computeStats(participantes: Participante[], valoraciones: Valora
     ranking,
     genero_preguntas,
     bloques,
+    equilibrio,
   };
 }
 
