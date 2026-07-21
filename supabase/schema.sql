@@ -36,6 +36,9 @@ create table if not exists public.participantes (
   visitado_otros_paises_cuales text,     -- qué país(es) hispanohablante(s)
   visitado_otros_paises_tiempo text,     -- tiempo de estancia (frecuencia habitual)
 
+  -- Versión del formulario (bloque del BIBD) que evaluó este participante.
+  bloque                      int,
+
   -- Nota: las preguntas sobre el género de quien habla se responden ahora una
   -- vez POR GRABACIÓN (ver tabla valoraciones), no una sola vez al final.
 
@@ -102,6 +105,9 @@ alter table public.valoraciones  add column if not exists conoce_personas_region
 alter table public.valoraciones  add column if not exists trato_diferenciado     boolean;
 alter table public.valoraciones  add column if not exists trato_mujer_diferente   boolean;
 alter table public.valoraciones  add column if not exists actitud_genero_influye  text;
+
+-- Versión del formulario (bloque del BIBD) asignada a cada participante.
+alter table public.participantes add column if not exists bloque int;
 
 -- ═══════════════════════════════════════════════════════════════════════════
 --  SEGURIDAD (Row Level Security)

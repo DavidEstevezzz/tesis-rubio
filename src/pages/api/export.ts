@@ -16,7 +16,7 @@ export const GET: APIRoute = async () => {
   const pById = new Map((participantes ?? []).map((p) => [p.id, p]));
 
   const pCols = [
-    'email', 'genero', 'genero_otro', 'edad', 'ciudad_nacimiento', 'ciudad_residencia',
+    'email', 'bloque', 'genero', 'genero_otro', 'edad', 'ciudad_nacimiento', 'ciudad_residencia',
     'lenguas_maternas', 'estudia', 'que_estudias', 'trabaja', 'cual_trabajo',
     'nivel_educativo', 'anios_estudio_espanol',
     'metodos_estudio', 'metodos_ejemplos', 'nivel_espanol', 'familia_espana',

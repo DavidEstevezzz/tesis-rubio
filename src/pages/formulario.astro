@@ -3,16 +3,46 @@ import Layout from '@/layouts/Layout.astro';
 import PasoGrabacion from '@/components/PasoGrabacion.astro';
 import TablaFrecuencia from '@/components/TablaFrecuencia.astro';
 import {
-  GRABACIONES,
   GENEROS,
   NIVELES_EDUCATIVOS,
   NIVELES_ESPANOL,
   METODOS_ESTUDIO,
   OTROS_IDIOMAS,
   NIVELES_IDIOMA,
+  NUM_BLOQUES,
+  grabacionesDeBloque,
 } from '@/lib/config';
+import { getServiceClient } from '@/lib/supabase';
 
-const totalGrab = GRABACIONES.length;
+export const prerender = false;
+
+// ── Diseño de bloques incompletos balanceados (BIBD) ────────────────────────
+// A cada participante se le asigna una "versión" del formulario (un bloque de
+// grabaciones equilibrado norte/sur). Repartimos de forma rotatoria según el
+// número de participantes ya registrados, así todas las versiones —y por tanto
+// todas las grabaciones— reciben aproximadamente el mismo número de respuestas.
+// Se puede forzar una versión concreta con ?bloque=N (útil para previsualizar).
+let version = 1;
+const forzado = Number(Astro.url.searchParams.get('bloque'));
+if (NUM_BLOQUES > 1) {
+  if (Number.isInteger(forzado) && forzado >= 1 && forzado <= NUM_BLOQUES) {
+    version = forzado;
+  } else {
+    try {
+      const supabase = getServiceClient();
+      const { count } = await supabase
+        .from('participantes')
+        .select('*', { count: 'exact', head: true });
+      version = ((count ?? 0) % NUM_BLOQUES) + 1;
+    } catch {
+      // Si no hay conexión/clave, repartimos al azar para no bloquear el formulario.
+      version = Math.floor(Math.random() * NUM_BLOQUES) + 1;
+    }
+  }
+}
+
+const grabaciones = grabacionesDeBloque(version);
+const totalGrab = grabaciones.length;
 ---
 
 <Layout title="Formulario · Estudio Sociolingüístico">
@@ -42,6 +72,9 @@ const totalGrab = GRABACIONES.length;
     </div>
 
     <form id="estudioForm" novalidate>
+      <!-- Versión del formulario (bloque del BIBD) asignada a este participante -->
+      <input type="hidden" name="bloque" value={version} />
+
       <!-- ═══ PASO 1 · DATOS PERSONALES ═══ -->
       <section class="step" data-step-label="Datos personales">
         <div class="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm sm:p-7">
@@ -246,9 +279,9 @@ const totalGrab = GRABACIONES.length;
         </div>
       </section>
 
-      <!-- ═══ PASOS 2..N+1 · GRABACIONES ═══ -->
+      <!-- ═══ PASOS 2..N+1 · GRABACIONES (solo las del bloque asignado) ═══ -->
       {
-        GRABACIONES.map((g, i) => (
+        grabaciones.map((g, i) => (
           <div class="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm sm:p-7 step-wrapper hidden">
             <PasoGrabacion grabacion={g} indice={i + 1} total={totalGrab} />
           </div>

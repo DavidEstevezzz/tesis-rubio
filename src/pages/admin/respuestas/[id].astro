@@ -22,6 +22,7 @@ const escalaTxt = (obj: Record<string, number>, items: { id: string; positivo: s
   items.map((it) => `${it.positivo}: ${obj?.[it.id] ?? '—'}`).join(' · ');
 
 const datos: [string, any][] = [
+  ['Versión del formulario (bloque)', p.bloque ?? '—'],
   ['Género', p.genero + (p.genero_otro ? ` (${p.genero_otro})` : '')],
   ['Edad', p.edad],
   ['Ciudad de nacimiento', p.ciudad_nacimiento],

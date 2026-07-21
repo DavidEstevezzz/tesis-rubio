@@ -4,6 +4,7 @@
  */
 import {
   GRABACIONES,
+  BLOQUES,
   ESCALA_VOZ,
   ESCALA_PERSONA,
   ESCALA_CULTURA,
@@ -142,6 +143,13 @@ export function computeStats(participantes: Participante[], valoraciones: Valora
     tratoMujerDiferente: boolCount(valoraciones, 'trato_mujer_diferente'),
   };
 
+  // ── Reparto por bloque del BIBD (cuántos participantes en cada versión) ──
+  const bloques = BLOQUES.map((b) => ({
+    version: b.version,
+    grabaciones: b.grabaciones,
+    n: participantes.filter((p) => Number(p.bloque) === b.version).length,
+  }));
+
   // Ranking de grabaciones por agradabilidad de la voz
   const ranking = [...porGrabacion]
     .filter((g) => g.n > 0)
@@ -168,6 +176,7 @@ export function computeStats(participantes: Participante[], valoraciones: Valora
     porGrabacion,
     ranking,
     genero_preguntas,
+    bloques,
   };
 }
 
