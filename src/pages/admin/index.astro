@@ -54,6 +54,30 @@ const hayDatos = stats.resumen.totalParticipantes > 0;
 
             {stats.bloques.length > 1 && (
               <div class="card mt-8">
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                  <h2 class="card-title">Equilibrio de escuchas por audio</h2>
+                  <span class={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${stats.equilibrio.brecha <= 1 ? 'bg-emerald-100 text-emerald-700' : stats.equilibrio.brecha <= 3 ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'}`}>
+                    Brecha máx–mín: {stats.equilibrio.brecha} ({stats.equilibrio.min}–{stats.equilibrio.max})
+                  </span>
+                </div>
+                <p class="card-sub">
+                  Nº de valoraciones que ha recibido cada grabación. El reparto
+                  asigna a cada participante la versión menos usada, así que estas
+                  cifras deberían mantenerse muy próximas entre sí (brecha ≈ 0-1).
+                </p>
+                <div class="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+                  {stats.equilibrio.porAudio.map((a) => (
+                    <div class="flex items-center justify-between rounded-lg border border-slate-100 bg-slate-50 px-3 py-2 text-sm">
+                      <span class="font-medium text-brand-700">Grabación {a.numero}</span>
+                      <span class="font-semibold text-slate-700">{a.n}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {stats.bloques.length > 1 && (
+              <div class="card mt-6">
                 <h2 class="card-title">Diseño de bloques (BIBD) · reparto de participantes</h2>
                 <p class="card-sub">
                   Cada participante evalúa solo las grabaciones de su versión del
