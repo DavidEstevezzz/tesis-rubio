@@ -95,9 +95,31 @@ admite **OGG/Opus** (el formato de los audios de WhatsApp), MP3, M4A/AAC y WAV.
 Al subir, comprueba que el _content-type_ sea `audio/ogg` (Supabase lo suele
 inferir por la extensión).
 
-El número de grabaciones se controla con `NUM_GRABACIONES` (por defecto 12). Si
-lo cambias, el formulario, la base de datos de respuestas y las estadísticas se
-adaptan automáticamente.
+El número total de grabaciones se controla con `NUM_GRABACIONES` (por defecto
+12). Si lo cambias, el formulario, la base de datos de respuestas y las
+estadísticas se adaptan automáticamente.
+
+## 🎛️ Diseño de bloques incompletos balanceados (BIBD)
+
+El formulario completo (las 12 grabaciones) dura demasiado (~40 min) y el
+cansancio arruina las respuestas. Para no eliminar ninguna grabación, cada
+participante evalúa **solo un subconjunto** equilibrado. Se controla en
+`src/lib/config.ts`:
+
+- **`GRABACIONES_POR_FORMULARIO`** (por defecto `6`): cuántas grabaciones ve
+  cada informante. Ponlo igual a `NUM_GRABACIONES` para desactivar el BIBD.
+- **`ZONA_POR_GRABACION`**: clasifica cada muestra como `'norte'` o `'sur'`.
+  ⚠️ **Ajústala con la zona real de cada grabación** (de partida, 1–6 = norte,
+  7–12 = sur). Debe haber 6 y 6 para que cada formulario quede 3 + 3.
+
+A partir de eso, `BLOQUES` genera automáticamente las versiones del formulario
+(ventanas cíclicas dentro de cada zona): cada versión queda equilibrada
+norte/sur y cada grabación aparece en el mismo número de bloques. A cada
+participante se le asigna una versión de forma **rotatoria** según cuántos ya
+han respondido, de modo que todas las grabaciones reciben un número similar de
+valoraciones. Puedes previsualizar una versión concreta con `?bloque=N` (p. ej.
+`/formulario?bloque=3`). El panel de administración muestra el reparto de
+participantes por bloque.
 
 ## 🛠️ Personalizar el formulario
 

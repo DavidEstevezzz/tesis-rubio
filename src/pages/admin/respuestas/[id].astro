@@ -22,6 +22,7 @@ const escalaTxt = (obj: Record<string, number>, items: { id: string; positivo: s
   items.map((it) => `${it.positivo}: ${obj?.[it.id] ?? '—'}`).join(' · ');
 
 const datos: [string, any][] = [
+  ['Versión del formulario (bloque)', p.bloque ?? '—'],
   ['Género', p.genero + (p.genero_otro ? ` (${p.genero_otro})` : '')],
   ['Edad', p.edad],
   ['Ciudad de nacimiento', p.ciudad_nacimiento],
@@ -46,9 +47,6 @@ const datos: [string, any][] = [
   ['¿Otros países hispanohablantes?', fmt(p.visitado_otros_paises)],
   ['¿Cuáles países?', p.visitado_otros_paises_cuales],
   ['Tiempo de estancia (otros países)', p.visitado_otros_paises_tiempo],
-  ['¿Trato diferenciado Mariam/Omar?', fmt(p.trato_diferenciado)],
-  ['¿Diferente con jefa mujer?', fmt(p.trato_mujer_diferente)],
-  ['Actitud según género (texto)', p.actitud_genero_influye],
 ];
 ---
 
@@ -94,6 +92,9 @@ const datos: [string, any][] = [
               <div><dt class="text-slate-400">Puesto / Ingresos / Estudios</dt><dd class="text-slate-700">{v.puesto_trabajo ?? '—'} · {v.nivel_ingresos ?? '—'} · {v.nivel_estudios ?? '—'}</dd></div>
               <div><dt class="text-slate-400">Región percibida</dt><dd class="text-slate-700">{v.region_percibida ?? '—'} {v.conoce_personas_region != null ? `(conoce: ${fmt(v.conoce_personas_region)})` : ''}{v.conoce_personas_region_opinion ? ` — ${v.conoce_personas_region_opinion}` : ''}</dd></div>
               <div class="sm:col-span-2"><dt class="text-slate-400">Gustó / Disgustó</dt><dd class="text-slate-700">👍 {v.aspecto_gustado ?? '—'} — 👎 {v.aspecto_disgustado ?? '—'}</dd></div>
+              <div><dt class="text-slate-400">¿Trato diferenciado Mariam/Omar?</dt><dd class="text-slate-700">{fmt(v.trato_diferenciado)}</dd></div>
+              <div><dt class="text-slate-400">¿Diferente con jefa mujer?</dt><dd class="text-slate-700">{fmt(v.trato_mujer_diferente)}</dd></div>
+              <div class="sm:col-span-2"><dt class="text-slate-400">Actitud según género (texto)</dt><dd class="text-slate-700">{v.actitud_genero_influye ?? '—'}</dd></div>
             </dl>
           </div>
         ))}

@@ -1,11 +1,12 @@
 import type { APIRoute } from 'astro';
 import { getServiceClient } from '@/lib/supabase';
 import {
-  GRABACIONES,
   ESCALA_VOZ,
   ESCALA_PERSONA,
   ESCALA_CULTURA,
   OTROS_IDIOMAS,
+  NUM_BLOQUES,
+  grabacionesDeBloque,
 } from '@/lib/config';
 
 export const prerender = false;
@@ -40,6 +41,12 @@ export const POST: APIRoute = async ({ request }) => {
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return json({ error: 'Introduce un correo electrónico válido.' }, 400);
   }
+
+  // Versión del formulario (bloque del BIBD) que se le mostró al participante.
+  // Se recalculan sus grabaciones en el servidor: no nos fiamos del cliente.
+  let bloque = asInt(data.bloque) ?? 1;
+  if (bloque < 1 || bloque > NUM_BLOQUES) bloque = 1;
+  const grabacionesBloque = grabacionesDeBloque(bloque);
 
   const supabase = getServiceClient();
 
@@ -91,9 +98,7 @@ export const POST: APIRoute = async ({ request }) => {
       visitado_otros_paises: asBool(data.visitado_otros_paises),
       visitado_otros_paises_cuales: data.visitado_otros_paises_cuales || null,
       visitado_otros_paises_tiempo: data.visitado_otros_paises_tiempo || null,
-      trato_diferenciado: asBool(data.trato_diferenciado),
-      trato_mujer_diferente: asBool(data.trato_mujer_diferente),
-      actitud_genero_influye: data.actitud_genero_influye || null,
+      bloque,
     })
     .select('id')
     .single();
@@ -106,8 +111,8 @@ export const POST: APIRoute = async ({ request }) => {
     return json({ error: 'No se pudo guardar la respuesta. Inténtalo de nuevo.' }, 500);
   }
 
-  // 4) Insertar valoraciones (una por grabación)
-  const valoraciones = GRABACIONES.map((g) => {
+  // 4) Insertar valoraciones (una por grabación del bloque asignado)
+  const valoraciones = grabacionesBloque.map((g) => {
     const p = `g${g.numero}`;
     return {
       participante_id: participante.id,
@@ -124,6 +129,10 @@ export const POST: APIRoute = async ({ request }) => {
       conoce_personas_region: asBool(data[`${p}_conoce_personas_region`]),
       conoce_personas_region_opinion: data[`${p}_conoce_personas_region_opinion`] || null,
       escala_cultura: escala(data, `${p}_cultura`, ESCALA_CULTURA),
+      // Reflexión sobre el género (una vez por grabación)
+      trato_diferenciado: asBool(data[`${p}_trato_diferenciado`]),
+      trato_mujer_diferente: asBool(data[`${p}_trato_mujer_diferente`]),
+      actitud_genero_influye: data[`${p}_actitud_genero_influye`] || null,
     };
   });
 

@@ -4,6 +4,7 @@
  */
 import {
   GRABACIONES,
+  BLOQUES,
   ESCALA_VOZ,
   ESCALA_PERSONA,
   ESCALA_CULTURA,
@@ -135,11 +136,19 @@ export function computeStats(participantes: Participante[], valoraciones: Valora
     ['1', '2', '3', '4', '5']
   );
 
-  // ── Preguntas de género (globales, por participante) ──
+  // ── Preguntas de género (ahora una por grabación → se agregan sobre todas
+  //    las valoraciones) ──
   const genero_preguntas = {
-    tratoDiferenciado: boolCount(participantes, 'trato_diferenciado'),
-    tratoMujerDiferente: boolCount(participantes, 'trato_mujer_diferente'),
+    tratoDiferenciado: boolCount(valoraciones, 'trato_diferenciado'),
+    tratoMujerDiferente: boolCount(valoraciones, 'trato_mujer_diferente'),
   };
+
+  // ── Reparto por bloque del BIBD (cuántos participantes en cada versión) ──
+  const bloques = BLOQUES.map((b) => ({
+    version: b.version,
+    grabaciones: b.grabaciones,
+    n: participantes.filter((p) => Number(p.bloque) === b.version).length,
+  }));
 
   // Ranking de grabaciones por agradabilidad de la voz
   const ranking = [...porGrabacion]
@@ -167,6 +176,7 @@ export function computeStats(participantes: Participante[], valoraciones: Valora
     porGrabacion,
     ranking,
     genero_preguntas,
+    bloques,
   };
 }
 

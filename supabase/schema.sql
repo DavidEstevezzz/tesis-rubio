@@ -36,10 +36,11 @@ create table if not exists public.participantes (
   visitado_otros_paises_cuales text,     -- qué país(es) hispanohablante(s)
   visitado_otros_paises_tiempo text,     -- tiempo de estancia (frecuencia habitual)
 
-  -- Preguntas globales sobre el género de quien habla (una vez, al final)
-  trato_diferenciado          boolean,   -- ¿trato diferenciado entre Mariam y Omar?
-  trato_mujer_diferente       boolean,   -- ¿habría sido diferente con una jefa mujer?
-  actitud_genero_influye      text,      -- desarrollo libre
+  -- Versión del formulario (bloque del BIBD) que evaluó este participante.
+  bloque                      int,
+
+  -- Nota: las preguntas sobre el género de quien habla se responden ahora una
+  -- vez POR GRABACIÓN (ver tabla valoraciones), no una sola vez al final.
 
   created_at                  timestamptz not null default now()
 );
@@ -73,6 +74,11 @@ create table if not exists public.valoraciones (
   -- Diferencial semántico de la CULTURA (6 ítems, 1-5)
   escala_cultura         jsonb not null default '{}'::jsonb,
 
+  -- Reflexión sobre el género de quien habla (una vez por grabación)
+  trato_diferenciado          boolean,   -- ¿trato diferenciado entre Mariam y Omar?
+  trato_mujer_diferente       boolean,   -- ¿habría sido diferente con una jefa mujer?
+  actitud_genero_influye      text,      -- desarrollo libre
+
   created_at             timestamptz not null default now(),
 
   unique (participante_id, grabacion)
@@ -92,6 +98,16 @@ alter table public.participantes add column if not exists visitado_espana_zonas 
 alter table public.participantes add column if not exists visitado_otros_paises_cuales text;
 alter table public.participantes add column if not exists visitado_otros_paises_tiempo text;
 alter table public.valoraciones  add column if not exists conoce_personas_region_opinion text;
+
+-- Las preguntas sobre el género pasaron de participantes → valoraciones
+-- (ahora se responden una vez por grabación). Se añaden a valoraciones; las
+-- columnas antiguas de participantes pueden quedar (no molestan) o borrarse.
+alter table public.valoraciones  add column if not exists trato_diferenciado     boolean;
+alter table public.valoraciones  add column if not exists trato_mujer_diferente   boolean;
+alter table public.valoraciones  add column if not exists actitud_genero_influye  text;
+
+-- Versión del formulario (bloque del BIBD) asignada a cada participante.
+alter table public.participantes add column if not exists bloque int;
 
 -- ═══════════════════════════════════════════════════════════════════════════
 --  SEGURIDAD (Row Level Security)

@@ -1,7 +1,8 @@
 -- ═══════════════════════════════════════════════════════════════════════════
 --  DATOS DE PRUEBA · Estudio Sociolingüístico (verbal-guise)
---  Genera 20 participantes ficticios, cada uno con sus 12 valoraciones
---  (240 valoraciones en total), usando SOLO valores válidos de config.ts.
+--  Genera 20 participantes ficticios; cada uno evalúa solo las 6 grabaciones
+--  de su bloque del BIBD (120 valoraciones en total), usando SOLO valores
+--  válidos de config.ts.
 --
 --  Uso:  Supabase → SQL Editor → pega este archivo entero → Run.
 --        Vuelve a /admin y recarga: las gráficas quedan totalmente pobladas.
@@ -13,14 +14,26 @@
 --    -- (las valoraciones se borran solas por ON DELETE CASCADE)
 -- ═══════════════════════════════════════════════════════════════════════════
 
-with nuevos as (
+-- Bloques del BIBD (deben coincidir con BLOQUES de src/lib/config.ts, con la
+-- clasificación provisional norte = 1–6, sur = 7–12). Cada participante evalúa
+-- solo las 6 grabaciones de su bloque.
+with bloques(version, grabs) as (
+  values
+    (1, array[1,2,3,7,8,9]),
+    (2, array[2,3,4,8,9,10]),
+    (3, array[3,4,5,9,10,11]),
+    (4, array[4,5,6,10,11,12]),
+    (5, array[1,5,6,7,11,12]),
+    (6, array[1,2,6,7,8,12])
+),
+nuevos as (
   insert into public.participantes (
     email, genero, genero_otro, edad,
     ciudad_nacimiento, ciudad_residencia, lenguas_maternas, otros_idiomas,
     estudia, trabaja, nivel_educativo, anios_estudio_espanol,
     metodos_estudio, metodos_ejemplos, nivel_espanol,
     familia_espana, visitado_espana, mejor_region_opinion, visitado_otros_paises,
-    trato_diferenciado, trato_mujer_diferente, actitud_genero_influye
+    bloque
   )
   select
     'prueba' || lpad(i::text, 2, '0') || '@ejemplo.test',
@@ -46,23 +59,17 @@ with nuevos as (
     random() < 0.6,                                                                  -- ha visitado España
     (array['Andalucía','Comunidad de Madrid','Cataluña','Comunidad Valenciana','País Vasco'])[(1 + floor(random()*5))::int],
     random() < 0.5,                                                                  -- ha visitado otros países
-    random() < 0.5,                                                                  -- trato diferenciado Mariam/Omar
-    random() < 0.5,                                                                  -- trato distinto con jefa mujer
-    (array[
-      'Creo que el género influye bastante en cómo se percibe la autoridad.',
-      'No he notado grandes diferencias por el género de quien habla.',
-      'Depende más del tono y la seguridad que del género.',
-      ''
-    ])[(1 + floor(random()*4))::int]
+    ((i - 1) % 6) + 1                                                                -- bloque asignado (rotatorio 1..6)
   from generate_series(1, 20) as i
-  returning id
+  returning id, bloque
 )
 insert into public.valoraciones (
   participante_id, grabacion,
   escala_voz, aspecto_gustado, aspecto_disgustado, proximidad,
   puesto_trabajo, nivel_ingresos, nivel_estudios,
   escala_persona, region_percibida, conoce_personas_region,
-  escala_cultura
+  escala_cultura,
+  trato_diferenciado, trato_mujer_diferente, actitud_genero_influye
 )
 select
   n.id,
@@ -87,7 +94,17 @@ select
   random() < 0.5,                                                                    -- conoce personas de esa región
   -- Escala de la CULTURA (6 ítems, 1–5)
   (select jsonb_object_agg(k, least(5, greatest(1, (qq.q + (random()-0.5)*2.4)::int)))
-     from unnest(array['innovadora','divertida','familiar','cercana','rica','interesante']) as k)
+     from unnest(array['innovadora','divertida','familiar','cercana','rica','interesante']) as k),
+  -- Reflexión sobre el género (una por grabación)
+  random() < 0.5,                                                                    -- trato diferenciado Mariam/Omar
+  random() < 0.5,                                                                    -- trato distinto con jefa mujer
+  (array[
+    'Creo que el género influye bastante en cómo se percibe la autoridad.',
+    'No he notado grandes diferencias por el género de quien habla.',
+    'Depende más del tono y la seguridad que del género.',
+    ''
+  ])[(1 + floor(random()*4))::int]
 from nuevos n
-cross join generate_series(1, 12) as g(numero)
+join bloques b on b.version = n.bloque
+cross join lateral unnest(b.grabs) as g(numero)
 cross join lateral (select 2 + (g.numero - 1) * (2.5 / 11.0) as q) as qq;

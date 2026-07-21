@@ -173,4 +173,38 @@ const proximidades = [1, 2, 3, 4, 5];
     <h3 class="field-title">¿Qué opinión te merece la cultura de la que crees que es la persona que habla?<span class="req">*</span></h3>
     <DiferencialSemantico name={`${p}_cultura`} items={ESCALA_CULTURA} />
   </div>
+
+  <!-- 7. Reflexión sobre el género (una vez por grabación) -->
+  <div class="mt-8 rounded-xl border border-brand-100 bg-brand-50/40 p-4">
+    <h3 class="font-display text-base font-bold text-brand-900">Reflexión sobre el género</h3>
+
+    <div class="field">
+      <h4 class="field-title">
+        ¿Crees que la persona que habla tiene un trato diferenciado entre Mariam
+        y Omar?<span class="req">*</span>
+      </h4>
+      <div class="pills">
+        <label class="pill"><input type="radio" name={`${p}_trato_diferenciado`} value="si" required class="peer sr-only" /><span>Sí</span></label>
+        <label class="pill"><input type="radio" name={`${p}_trato_diferenciado`} value="no" required class="peer sr-only" /><span>No</span></label>
+      </div>
+    </div>
+
+    <div class="field">
+      <h4 class="field-title">
+        ¿Piensas que el trato de una mujer (jefa de hotel) habría sido diferente?<span class="req">*</span>
+      </h4>
+      <div class="pills">
+        <label class="pill"><input type="radio" name={`${p}_trato_mujer_diferente`} value="si" required class="peer sr-only" /><span>Sí</span></label>
+        <label class="pill"><input type="radio" name={`${p}_trato_mujer_diferente`} value="no" required class="peer sr-only" /><span>No</span></label>
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="field-title" for={`${p}_actitud_genero`}>
+        ¿Piensas que tu actitud hacia esta variedad dialectal puede verse influida
+        por el género de la persona que habla? (Desarrolla tu respuesta brevemente)<span class="req">*</span>
+      </label>
+      <textarea id={`${p}_actitud_genero`} name={`${p}_actitud_genero_influye`} class="input" required></textarea>
+    </div>
+  </div>
 </section>
