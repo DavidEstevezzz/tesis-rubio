@@ -23,7 +23,6 @@ export const GET: APIRoute = async () => {
     'familia_espana_zonas', 'visitado_espana', 'visitado_espana_tiempo',
     'visitado_espana_zonas', 'mejor_region_opinion', 'visitado_otros_paises',
     'visitado_otros_paises_cuales', 'visitado_otros_paises_tiempo',
-    'trato_diferenciado', 'trato_mujer_diferente', 'actitud_genero_influye',
   ];
 
   const vozCols = ESCALA_VOZ.map((i) => `voz_${i.id}`);
@@ -39,6 +38,7 @@ export const GET: APIRoute = async () => {
     ...personaCols,
     'region_percibida', 'conoce_personas_region', 'conoce_personas_region_opinion',
     ...culturaCols,
+    'trato_diferenciado', 'trato_mujer_diferente', 'actitud_genero_influye',
     'fecha',
   ];
 
@@ -55,6 +55,7 @@ export const GET: APIRoute = async () => {
     for (const i of ESCALA_PERSONA) cells.push((v.escala_persona ?? {})[i.id] ?? '');
     cells.push(v.region_percibida ?? '', fmtBool(v.conoce_personas_region), v.conoce_personas_region_opinion ?? '');
     for (const i of ESCALA_CULTURA) cells.push((v.escala_cultura ?? {})[i.id] ?? '');
+    cells.push(fmtBool(v.trato_diferenciado), fmtBool(v.trato_mujer_diferente), v.actitud_genero_influye ?? '');
     cells.push(v.created_at);
     rows.push(cells.map(csvCell).join(','));
   }

@@ -135,10 +135,11 @@ export function computeStats(participantes: Participante[], valoraciones: Valora
     ['1', '2', '3', '4', '5']
   );
 
-  // ── Preguntas de género (globales, por participante) ──
+  // ── Preguntas de género (ahora una por grabación → se agregan sobre todas
+  //    las valoraciones) ──
   const genero_preguntas = {
-    tratoDiferenciado: boolCount(participantes, 'trato_diferenciado'),
-    tratoMujerDiferente: boolCount(participantes, 'trato_mujer_diferente'),
+    tratoDiferenciado: boolCount(valoraciones, 'trato_diferenciado'),
+    tratoMujerDiferente: boolCount(valoraciones, 'trato_mujer_diferente'),
   };
 
   // Ranking de grabaciones por agradabilidad de la voz

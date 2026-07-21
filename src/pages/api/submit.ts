@@ -91,9 +91,6 @@ export const POST: APIRoute = async ({ request }) => {
       visitado_otros_paises: asBool(data.visitado_otros_paises),
       visitado_otros_paises_cuales: data.visitado_otros_paises_cuales || null,
       visitado_otros_paises_tiempo: data.visitado_otros_paises_tiempo || null,
-      trato_diferenciado: asBool(data.trato_diferenciado),
-      trato_mujer_diferente: asBool(data.trato_mujer_diferente),
-      actitud_genero_influye: data.actitud_genero_influye || null,
     })
     .select('id')
     .single();
@@ -124,6 +121,10 @@ export const POST: APIRoute = async ({ request }) => {
       conoce_personas_region: asBool(data[`${p}_conoce_personas_region`]),
       conoce_personas_region_opinion: data[`${p}_conoce_personas_region_opinion`] || null,
       escala_cultura: escala(data, `${p}_cultura`, ESCALA_CULTURA),
+      // Reflexión sobre el género (una vez por grabación)
+      trato_diferenciado: asBool(data[`${p}_trato_diferenciado`]),
+      trato_mujer_diferente: asBool(data[`${p}_trato_mujer_diferente`]),
+      actitud_genero_influye: data[`${p}_actitud_genero_influye`] || null,
     };
   });
 

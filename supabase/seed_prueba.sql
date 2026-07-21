@@ -19,8 +19,7 @@ with nuevos as (
     ciudad_nacimiento, ciudad_residencia, lenguas_maternas, otros_idiomas,
     estudia, trabaja, nivel_educativo, anios_estudio_espanol,
     metodos_estudio, metodos_ejemplos, nivel_espanol,
-    familia_espana, visitado_espana, mejor_region_opinion, visitado_otros_paises,
-    trato_diferenciado, trato_mujer_diferente, actitud_genero_influye
+    familia_espana, visitado_espana, mejor_region_opinion, visitado_otros_paises
   )
   select
     'prueba' || lpad(i::text, 2, '0') || '@ejemplo.test',
@@ -45,15 +44,7 @@ with nuevos as (
     random() < 0.4,                                                                  -- familia en España
     random() < 0.6,                                                                  -- ha visitado España
     (array['Andalucía','Comunidad de Madrid','Cataluña','Comunidad Valenciana','País Vasco'])[(1 + floor(random()*5))::int],
-    random() < 0.5,                                                                  -- ha visitado otros países
-    random() < 0.5,                                                                  -- trato diferenciado Mariam/Omar
-    random() < 0.5,                                                                  -- trato distinto con jefa mujer
-    (array[
-      'Creo que el género influye bastante en cómo se percibe la autoridad.',
-      'No he notado grandes diferencias por el género de quien habla.',
-      'Depende más del tono y la seguridad que del género.',
-      ''
-    ])[(1 + floor(random()*4))::int]
+    random() < 0.5                                                                   -- ha visitado otros países
   from generate_series(1, 20) as i
   returning id
 )
@@ -62,7 +53,8 @@ insert into public.valoraciones (
   escala_voz, aspecto_gustado, aspecto_disgustado, proximidad,
   puesto_trabajo, nivel_ingresos, nivel_estudios,
   escala_persona, region_percibida, conoce_personas_region,
-  escala_cultura
+  escala_cultura,
+  trato_diferenciado, trato_mujer_diferente, actitud_genero_influye
 )
 select
   n.id,
@@ -87,7 +79,16 @@ select
   random() < 0.5,                                                                    -- conoce personas de esa región
   -- Escala de la CULTURA (6 ítems, 1–5)
   (select jsonb_object_agg(k, least(5, greatest(1, (qq.q + (random()-0.5)*2.4)::int)))
-     from unnest(array['innovadora','divertida','familiar','cercana','rica','interesante']) as k)
+     from unnest(array['innovadora','divertida','familiar','cercana','rica','interesante']) as k),
+  -- Reflexión sobre el género (una por grabación)
+  random() < 0.5,                                                                    -- trato diferenciado Mariam/Omar
+  random() < 0.5,                                                                    -- trato distinto con jefa mujer
+  (array[
+    'Creo que el género influye bastante en cómo se percibe la autoridad.',
+    'No he notado grandes diferencias por el género de quien habla.',
+    'Depende más del tono y la seguridad que del género.',
+    ''
+  ])[(1 + floor(random()*4))::int]
 from nuevos n
 cross join generate_series(1, 12) as g(numero)
 cross join lateral (select 2 + (g.numero - 1) * (2.5 / 11.0) as q) as qq;
