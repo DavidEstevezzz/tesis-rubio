@@ -5,12 +5,13 @@
 import {
   GRABACIONES,
   BLOQUES,
+  REPLICAS_POR_GRABACION,
+  BIBD_EQUILIBRADO,
   ESCALA_VOZ,
   ESCALA_PERSONA,
   ESCALA_CULTURA,
   GENEROS,
   NIVELES_ESPANOL,
-  PUESTOS_TRABAJO,
   NIVELES_INGRESOS,
   NIVELES_ESTUDIOS_PERCIBIDOS,
   COMUNIDADES,
@@ -103,6 +104,10 @@ export function computeStats(participantes: Participante[], valoraciones: Valora
     return {
       numero: g.numero,
       titulo: g.titulo,
+      // Ciudad y zona: solo para el panel de investigadores.
+      ciudad: g.ciudad,
+      zona: g.zona,
+      etiqueta: g.etiqueta,
       n: vals.length,
       mediaVozGlobal: avg(voz.map((x) => x.media)),
       mediaPersonaGlobal: avg(persona.map((x) => x.media)),
@@ -111,7 +116,6 @@ export function computeStats(participantes: Participante[], valoraciones: Valora
       voz,
       persona,
       cultura,
-      puesto: distribucion(countBy(vals, (v) => v.puesto_trabajo), PUESTOS_TRABAJO),
       ingresos: distribucion(countBy(vals, (v) => v.nivel_ingresos), NIVELES_INGRESOS),
       estudios: distribucion(countBy(vals, (v) => v.nivel_estudios), NIVELES_ESTUDIOS_PERCIBIDOS),
     };
@@ -127,7 +131,6 @@ export function computeStats(participantes: Participante[], valoraciones: Valora
     COMUNIDADES
   );
 
-  const puestoGlobal = distribucion(countBy(valoraciones, (v) => v.puesto_trabajo), PUESTOS_TRABAJO);
   const ingresosGlobal = distribucion(countBy(valoraciones, (v) => v.nivel_ingresos), NIVELES_INGRESOS);
   const estudiosGlobal = distribucion(countBy(valoraciones, (v) => v.nivel_estudios), NIVELES_ESTUDIOS_PERCIBIDOS);
 
@@ -144,14 +147,24 @@ export function computeStats(participantes: Participante[], valoraciones: Valora
   };
 
   // ── Reparto por bloque del BIBD (cuántos participantes en cada versión) ──
+  const ciudadDe = (numero: number) =>
+    GRABACIONES.find((g) => g.numero === numero)?.ciudad ?? String(numero);
+
   const bloques = BLOQUES.map((b) => ({
     version: b.version,
     grabaciones: b.grabaciones,
+    // Ciudades en el orden real de presentación (zonas alternadas).
+    ciudades: b.grabaciones.map(ciudadDe),
     n: participantes.filter((p) => Number(p.bloque) === b.version).length,
   }));
 
   // ── Equilibrio de escuchas por audio (nº de valoraciones de cada grabación) ──
-  const escuchasPorAudio = porGrabacion.map((g) => ({ numero: g.numero, n: g.n }));
+  const escuchasPorAudio = porGrabacion.map((g) => ({
+    numero: g.numero,
+    ciudad: g.ciudad,
+    zona: g.zona,
+    n: g.n,
+  }));
   const cuentas = escuchasPorAudio.map((e) => e.n);
   const equilibrio = {
     porAudio: escuchasPorAudio,
@@ -159,6 +172,10 @@ export function computeStats(participantes: Participante[], valoraciones: Valora
     max: cuentas.length ? Math.max(...cuentas) : 0,
     // Brecha máx–min: 0 = perfectamente equilibrado.
     brecha: cuentas.length ? Math.max(...cuentas) - Math.min(...cuentas) : 0,
+    // Veces que aparece cada grabación en el conjunto de formularios y si el
+    // diseño está bien equilibrado (todas con la misma réplica).
+    replicas: REPLICAS_POR_GRABACION,
+    disenoEquilibrado: BIBD_EQUILIBRADO,
   };
 
   // Ranking de grabaciones por agradabilidad de la voz
@@ -179,7 +196,6 @@ export function computeStats(participantes: Participante[], valoraciones: Valora
       persona: personaGlobal,
       cultura: culturaGlobal,
       regionPercibida,
-      puesto: puestoGlobal,
       ingresos: ingresosGlobal,
       estudios: estudiosGlobal,
       proximidadDist,

@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
 import { getServiceClient } from '@/lib/supabase';
-import { ESCALA_VOZ, ESCALA_PERSONA, ESCALA_CULTURA } from '@/lib/config';
+import { ESCALA_VOZ, ESCALA_PERSONA, ESCALA_CULTURA, GRABACIONES } from '@/lib/config';
 
 export const prerender = false;
 
@@ -29,12 +29,15 @@ export const GET: APIRoute = async () => {
   const personaCols = ESCALA_PERSONA.map((i) => `persona_${i.id}`);
   const culturaCols = ESCALA_CULTURA.map((i) => `cultura_${i.id}`);
 
+  // Ciudad y zona dialectal de cada grabación, para poder cruzarlas al analizar.
+  const grabById = new Map(GRABACIONES.map((g) => [g.numero, g]));
+
   const header = [
     ...pCols,
-    'grabacion',
+    'grabacion', 'ciudad', 'zona',
     ...vozCols,
     'aspecto_gustado', 'aspecto_disgustado', 'proximidad',
-    'puesto_trabajo', 'nivel_ingresos', 'nivel_estudios',
+    'nivel_estudios', 'nivel_ingresos',
     ...personaCols,
     'region_percibida', 'conoce_personas_region', 'conoce_personas_region_opinion',
     ...culturaCols,
@@ -48,10 +51,11 @@ export const GET: APIRoute = async () => {
     const p = pById.get(v.participante_id) ?? {};
     const cells: any[] = [];
     for (const c of pCols) cells.push(fmtBool(p[c]));
-    cells.push(v.grabacion);
+    const g = grabById.get(v.grabacion);
+    cells.push(v.grabacion, g?.ciudad ?? '', g?.zona ?? '');
     for (const i of ESCALA_VOZ) cells.push((v.escala_voz ?? {})[i.id] ?? '');
     cells.push(v.aspecto_gustado, v.aspecto_disgustado, v.proximidad ?? '');
-    cells.push(v.puesto_trabajo ?? '', v.nivel_ingresos ?? '', v.nivel_estudios ?? '');
+    cells.push(v.nivel_estudios ?? '', v.nivel_ingresos ?? '');
     for (const i of ESCALA_PERSONA) cells.push((v.escala_persona ?? {})[i.id] ?? '');
     cells.push(v.region_percibida ?? '', fmtBool(v.conoce_personas_region), v.conoce_personas_region_opinion ?? '');
     for (const i of ESCALA_CULTURA) cells.push((v.escala_cultura ?? {})[i.id] ?? '');

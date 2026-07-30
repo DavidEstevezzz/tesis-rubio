@@ -14,17 +14,21 @@
 --    -- (las valoraciones se borran solas por ON DELETE CASCADE)
 -- ═══════════════════════════════════════════════════════════════════════════
 
--- Bloques del BIBD (deben coincidir con BLOQUES de src/lib/config.ts, con la
--- clasificación provisional norte = 1–6, sur = 7–12). Cada participante evalúa
--- solo las 6 grabaciones de su bloque.
+-- Bloques del BIBD. Deben coincidir con BLOQUES de src/lib/config.ts, donde la
+-- numeración de las grabaciones es:
+--   Meridionales:    1 Granada · 2 Cádiz · 3 Badajoz · 4 Murcia · 5 Tenerife
+--   Septentrionales: 6 Madrid · 7 Barcelona · 8 Mallorca · 9 Huesca
+--                    10 Guipúzcoa · 11 A Coruña · 12 Asturias
+-- Cada participante evalúa solo las 6 grabaciones de su formulario, y cada
+-- grabación aparece en exactamente 3 de los 6 formularios.
 with bloques(version, grabs) as (
   values
-    (1, array[1,2,3,7,8,9]),
-    (2, array[2,3,4,8,9,10]),
-    (3, array[3,4,5,9,10,11]),
-    (4, array[4,5,6,10,11,12]),
-    (5, array[1,5,6,7,11,12]),
-    (6, array[1,2,6,7,8,12])
+    (1, array[1,6,2,7,3,8]),    -- Granada·Madrid·Cádiz·Barcelona·Badajoz·Mallorca
+    (2, array[1,9,4,10,5,11]),  -- Granada·Huesca·Murcia·Guipúzcoa·Tenerife·A Coruña
+    (3, array[2,12,4,6,5,9]),   -- Cádiz·Asturias·Murcia·Madrid·Tenerife·Huesca
+    (4, array[1,7,8,3,10,12]),  -- Granada·Barcelona·Mallorca·Badajoz·Guipúzcoa·Asturias
+    (5, array[2,6,11,4,8,10]),  -- Cádiz·Madrid·A Coruña·Murcia·Mallorca·Guipúzcoa
+    (6, array[3,7,9,5,11,12])   -- Badajoz·Barcelona·Huesca·Tenerife·A Coruña·Asturias
 ),
 nuevos as (
   insert into public.participantes (
@@ -49,8 +53,8 @@ nuevos as (
     ),
     random() < 0.7,                                                                  -- estudia
     random() < 0.5,                                                                  -- trabaja
-    (array['Educación secundaria (ESO)','Bachillerato','Formación profesional',
-           'Grado universitario','Máster o posgrado'])[(1 + floor(random()*5))::int],
+    (array['Educación secundaria','Bachillerato','Formación profesional',
+           'Licencia/Grado universitario','Máster o posgrado'])[(1 + floor(random()*5))::int],
     (1 + floor(random()*10))::int,                                                   -- años estudiando español
     (array['Academia','Universidad','Internet','Música','Televisión'])[1 : (1 + floor(random()*4))::int],
     null,
@@ -66,7 +70,7 @@ nuevos as (
 insert into public.valoraciones (
   participante_id, grabacion,
   escala_voz, aspecto_gustado, aspecto_disgustado, proximidad,
-  puesto_trabajo, nivel_ingresos, nivel_estudios,
+  nivel_estudios, nivel_ingresos,
   escala_persona, region_percibida, conoce_personas_region,
   escala_cultura,
   trato_diferenciado, trato_mujer_diferente, actitud_genero_influye
@@ -81,9 +85,8 @@ select
   (array['La entonación','La claridad al pronunciar','El ritmo pausado','La cercanía', null])[(1 + floor(random()*5))::int],
   (array['Algunas erres','La velocidad','Ciertas vocales', null, null])[(1 + floor(random()*5))::int],
   least(5, greatest(1, (qq.q + (random()-0.5)*2.0)::int)),                           -- proximidad 1–5
-  (array['Poco cualificado','Bien cualificado','Altamente cualificado'])[least(3, greatest(1, (qq.q/5.0*3 + (random()-0.5)*2)::int))],
-  (array['Bajo','Medio','Alto'])[least(3, greatest(1, (qq.q/5.0*3 + (random()-0.5)*2)::int))],
-  (array['Sin estudios','Primarios','Secundarios','Universitarios'])[least(4, greatest(1, (qq.q/5.0*4 + (random()-0.5)*2)::int))],
+  (array['Bajo','Medio','Alto'])[least(3, greatest(1, (qq.q/5.0*3 + (random()-0.5)*2)::int))],   -- nivel de estudios percibido
+  (array['Bajo','Medio','Alto'])[least(3, greatest(1, (qq.q/5.0*3 + (random()-0.5)*2)::int))],   -- nivel de ingresos percibido
   -- Escala de la PERSONA (6 ítems, 1–5)
   (select jsonb_object_agg(k, least(5, greatest(1, (qq.q + (random()-0.5)*2.4)::int)))
      from unnest(array['inteligente','simpatica','cercana','culta','educada','confiable']) as k),

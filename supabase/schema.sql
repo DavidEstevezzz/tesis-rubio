@@ -60,9 +60,12 @@ create table if not exists public.valoraciones (
   proximidad             int,     -- 1 (totalmente diferente) … 5 (idéntica)
 
   -- Percepción socioeconómica
-  puesto_trabajo         text,    -- Poco / Bien / Altamente cualificado
+  nivel_estudios         text,    -- Bajo / Medio / Alto
   nivel_ingresos         text,    -- Bajo / Medio / Alto
-  nivel_estudios         text,    -- Sin estudios / Primarios / Secundarios / Universitarios
+  -- OBSOLETA: la pregunta sobre el puesto de trabajo (Poco/Bien/Altamente
+  -- cualificado) se sustituyó por nivel_estudios. Se conserva la columna para
+  -- no perder las respuestas ya recogidas; el formulario ya no la rellena.
+  puesto_trabajo         text,
 
   -- Diferencial semántico de la PERSONA (6 ítems, 1-5)
   escala_persona         jsonb not null default '{}'::jsonb,
@@ -109,6 +112,11 @@ alter table public.valoraciones  add column if not exists actitud_genero_influye
 -- Versión del formulario (bloque del BIBD) asignada a cada participante.
 alter table public.participantes add column if not exists bloque int;
 
+-- La pregunta del «puesto de trabajo» pasó a ser «nivel de estudios»
+-- (Bajo/Medio/Alto). No se borra puesto_trabajo para conservar el histórico.
+-- Si quieres eliminarla del todo, descomenta:
+--   alter table public.valoraciones drop column if exists puesto_trabajo;
+
 -- ═══════════════════════════════════════════════════════════════════════════
 --  SEGURIDAD (Row Level Security)
 --  · El servidor usa la clave service_role, que IGNORA estas políticas, así
@@ -138,7 +146,10 @@ create policy "admin lee valoraciones"
 -- ── Vista aplanada para exportar / analizar fácilmente ──────────────────────
 -- Expande los jsonb a columnas. Útil para exportar a CSV o consultar en el
 -- editor SQL. (La app también ofrece exportación CSV desde el panel.)
-create or replace view public.valoraciones_plano as
+-- (se recrea desde cero: `create or replace` no permite QUITAR columnas y la
+--  vista ya no incluye puesto_trabajo)
+drop view if exists public.valoraciones_plano;
+create view public.valoraciones_plano as
 select
   v.id,
   p.email,
@@ -155,9 +166,8 @@ select
   (v.escala_voz->>'profesional')::int  as voz_profesional,
   (v.escala_voz->>'musical')::int      as voz_musical,
   v.proximidad,
-  v.puesto_trabajo,
-  v.nivel_ingresos,
   v.nivel_estudios,
+  v.nivel_ingresos,
   v.region_percibida,
   v.conoce_personas_region,
   v.created_at

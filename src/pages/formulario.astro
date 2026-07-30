@@ -17,12 +17,14 @@ import { getServiceClient } from '@/lib/supabase';
 export const prerender = false;
 
 // ── Diseño de bloques incompletos balanceados (BIBD) ────────────────────────
-// A cada participante se le asigna una "versión" del formulario (un bloque de
-// grabaciones equilibrado norte/sur). Para que TODOS los audios reciban el
-// mismo número de escuchas, asignamos la versión con MENOS participantes
-// completados hasta el momento (empates → al azar). Como cada grabación está en
-// exactamente 3 de las 6 versiones, igualar las versiones iguala las escuchas
-// por audio, y el reparto se autocorrige ante ráfagas o abandonos.
+// A cada participante se le asigna una de las seis "versiones" del formulario
+// (F1…F6 de config.ts): 6 grabaciones con hablas meridionales y septentrionales
+// alternadas. Para que TODOS los audios reciban el mismo número de escuchas,
+// asignamos la versión con MENOS participantes completados hasta el momento
+// (empates → al azar). Como cada grabación está en exactamente 3 de las 6
+// versiones, igualar el nº de participantes por versión iguala las escuchas por
+// audio (p. ej. 20 participantes ≈ 3-4 por versión → 10 escuchas por audio), y
+// el reparto se autocorrige ante ráfagas o abandonos.
 // Se puede forzar una versión concreta con ?bloque=N (útil para previsualizar).
 let version = 1;
 const forzado = Number(Astro.url.searchParams.get('bloque'));
@@ -68,6 +70,14 @@ const totalGrab = grabaciones.length;
         estudiantes) las distintas variedades del español europeo. Escucharás
         varias grabaciones y compartirás tus impresiones. No hay respuestas
         correctas ni incorrectas: solo nos interesa <strong>tu opinión</strong>.
+      </p>
+      <p class="mt-3 flex flex-wrap items-center gap-2 text-sm">
+        <span class="rounded-full border border-brand-100 bg-brand-50 px-3 py-1 font-medium text-brand-700">
+          🎧 {totalGrab} grabaciones
+        </span>
+        <span class="rounded-full border border-brand-100 bg-brand-50 px-3 py-1 font-medium text-brand-700">
+          🕑 Unos 15-20 minutos
+        </span>
       </p>
     </header>
 
