@@ -8,39 +8,30 @@
  * ─────────────────────────────────────────────────────────────────────────
  */
 
-/** Número total de grabaciones del estudio (el "pool" completo). */
-export const NUM_GRABACIONES = 12;
-
-/**
- * Nº de grabaciones que evalúa CADA participante (bloque incompleto).
- *
- * El formulario completo (las 12) dura demasiado (~40 min) y el cansancio
- * arruina las respuestas. Para no eliminar ninguna grabación se usa un
- * **diseño de bloques incompletos balanceados (BIBD)**: cada informante
- * evalúa solo un subconjunto de `GRABACIONES_POR_FORMULARIO`, equilibrado
- * entre variedades del norte y del sur peninsular (mitad y mitad).
- *
- * Pon este valor igual a `NUM_GRABACIONES` para desactivar el BIBD y que
- * todos evalúen las 12.
- */
-export const GRABACIONES_POR_FORMULARIO = 6;
-
 /** Rango de la escala de valoración (diferencial semántico). */
 export const ESCALA_MIN = 1;
 export const ESCALA_MAX = 5;
 
 // ── Grabaciones ────────────────────────────────────────────────────────────
-// Sustituye estas URLs por las reales cuando estén listas. Admite:
-//   · tipo 'audio'      → url a un .mp3/.ogg (Supabase Storage, S3, etc.)
-//   · tipo 'soundcloud' → url pública de la pista en SoundCloud
-/** Zona dialectal de la muestra (para equilibrar los bloques del BIBD). */
-export type Zona = 'norte' | 'sur';
+/**
+ * Zona dialectal de la muestra. Es el eje que equilibra cada formulario:
+ * en todos ellos se alternan hablas meridionales y septentrionales.
+ */
+export type Zona = 'meridional' | 'septentrional';
 
 export type Grabacion = {
   numero: number;
+  /**
+   * Ciudad/provincia del habla. ⚠️ Dato SOLO para el investigador: el estudio
+   * es a ciegas, así que nunca se muestra al participante (él ve «Grabación 1»,
+   * «Grabación 2»…). Se usa para nombrar el archivo y en el panel /admin.
+   */
+  ciudad: string;
+  /** Etiqueta neutra (sin ciudad) que sí puede verse en el formulario. */
   titulo: string;
+  /** Etiqueta con ciudad para el panel de investigadores. */
+  etiqueta: string;
   tipo: 'audio' | 'soundcloud';
-  /** Norte o sur peninsular. Se usa para balancear cada formulario. */
   zona: Zona;
   /** URL del audio principal. Admite .ogg/.opus (WhatsApp), .mp3, .m4a, .wav… */
   url: string;
@@ -60,81 +51,168 @@ export const BUCKET_GRABACIONES = 'grabaciones';
 // Supabase (se toma de PUBLIC_SUPABASE_URL, así que no hay que repetirla).
 const SUPABASE_URL = import.meta.env.PUBLIC_SUPABASE_URL ?? '';
 export const storageUrl = (archivo: string) =>
-  `${SUPABASE_URL}/storage/v1/object/public/${BUCKET_GRABACIONES}/${archivo}`;
+  `${SUPABASE_URL}/storage/v1/object/public/${BUCKET_GRABACIONES}/${encodeURIComponent(archivo)}`;
 
-// ⚠️ IMPORTANTE — clasificación NORTE/SUR de cada muestra.
-// El equilibrio del BIBD depende de esta tabla. AJÚSTALA con la zona real de
-// cada grabación (muestra1 … muestra12). Debe haber la misma cantidad de
-// «norte» que de «sur» (6 y 6) para que cada formulario quede 3 + 3.
-// Valores de partida (provisionales): 1–6 = norte, 7–12 = sur.
-export const ZONA_POR_GRABACION: Record<number, Zona> = {
-  1: 'norte', 2: 'norte', 3: 'norte', 4: 'norte', 5: 'norte', 6: 'norte',
-  7: 'sur', 8: 'sur', 9: 'sur', 10: 'sur', 11: 'sur', 12: 'sur',
-};
+/** Extensión de los audios del bucket (todos comparten formato). */
+export const EXTENSION_AUDIO = '.ogg';
 
-// Las 12 grabaciones apuntan a  muestra1.ogg … muestra12.ogg  del bucket.
-// → Sube tus audios de WhatsApp a Supabase Storage con ESOS nombres exactos
-//   (bucket "grabaciones", público) y funcionarán sin tocar nada más.
-//   ¿Prefieres otros nombres o formatos? Cambia solo la línea `url` de abajo.
-export const GRABACIONES: Grabacion[] = Array.from(
-  { length: NUM_GRABACIONES },
-  (_, i) => ({
-    numero: i + 1,
-    titulo: `Grabación ${i + 1}`,
-    tipo: 'audio' as const,
-    zona: ZONA_POR_GRABACION[i + 1] ?? 'norte',
-    url: storageUrl(`muestra${i + 1}.ogg`),
-    // Opcional: descomenta para un audio de reserva (iPhones antiguos):
-    // urlFallback: storageUrl(`muestra${i + 1}.m4a`),
-  })
-);
+// ── Las 12 hablas del estudio ──────────────────────────────────────────────
+// El nombre del archivo es la ciudad en minúscula, sin acentos ni espacios,
+// más la extensión: granada.ogg, cadiz.ogg, acoruna.ogg, guipuzcoa.ogg…
+// → Sube los 12 audios al bucket "grabaciones" (público) con ESOS nombres.
+const CATALOGO: { ciudad: string; archivo: string; zona: Zona }[] = [
+  // Hablas meridionales (5)
+  { ciudad: 'Granada',    archivo: 'granada',    zona: 'meridional' },
+  { ciudad: 'Cádiz',      archivo: 'cadiz',      zona: 'meridional' },
+  { ciudad: 'Badajoz',    archivo: 'badajoz',    zona: 'meridional' },
+  { ciudad: 'Murcia',     archivo: 'murcia',     zona: 'meridional' },
+  { ciudad: 'Tenerife',   archivo: 'tenerife',   zona: 'meridional' },
+  // Hablas septentrionales (7)
+  { ciudad: 'Madrid',     archivo: 'madrid',     zona: 'septentrional' },
+  { ciudad: 'Barcelona',  archivo: 'barcelona',  zona: 'septentrional' },
+  { ciudad: 'Mallorca',   archivo: 'mallorca',   zona: 'septentrional' },
+  { ciudad: 'Huesca',     archivo: 'huesca',     zona: 'septentrional' },
+  { ciudad: 'Guipúzcoa',  archivo: 'guipuzcoa',  zona: 'septentrional' },
+  { ciudad: 'A Coruña',   archivo: 'acoruna',    zona: 'septentrional' },
+  { ciudad: 'Asturias',   archivo: 'asturias',   zona: 'septentrional' },
+];
+
+/** Número total de grabaciones del estudio (el "pool" completo). */
+export const NUM_GRABACIONES = CATALOGO.length;
+
+export const GRABACIONES: Grabacion[] = CATALOGO.map((c, i) => ({
+  numero: i + 1,
+  ciudad: c.ciudad,
+  titulo: `Grabación ${i + 1}`,
+  etiqueta: `${i + 1} · ${c.ciudad}`,
+  tipo: 'audio' as const,
+  zona: c.zona,
+  url: storageUrl(`${c.archivo}${EXTENSION_AUDIO}`),
+  // Opcional: descomenta para un audio de reserva (iPhones antiguos):
+  // urlFallback: storageUrl(`${c.archivo}.m4a`),
+}));
 
 // ── Diseño de bloques incompletos balanceados (BIBD) ────────────────────────
-// Cada participante evalúa GRABACIONES_POR_FORMULARIO muestras (un "bloque"),
-// con la mitad del norte y la mitad del sur. Los bloques se generan con
-// ventanas cíclicas dentro de cada zona, de modo que:
-//   · cada formulario queda equilibrado norte/sur;
-//   · cada grabación aparece en el mismo número de bloques (réplica constante),
-//     así que, repartiendo a los informantes de forma rotatoria, todas las
-//     muestras reciben aproximadamente el mismo número de valoraciones.
+// El formulario con las 12 grabaciones duraba ~40 min y el cansancio arruina
+// las respuestas. Para no suprimir ninguna grabación, cada informante evalúa
+// solo 6 (un "bloque"), según seis formularios fijos (F1…F6) definidos abajo.
+//
+// Propiedad clave del diseño: CADA una de las 12 grabaciones aparece en
+// EXACTAMENTE 3 de los 6 formularios. Por tanto, si los participantes se
+// reparten a partes iguales entre las seis versiones, todas las grabaciones
+// reciben el mismo número de escuchas (ver el reparto en `formulario.astro`).
+//
+// Dentro de cada formulario las hablas se presentan ALTERNADAS
+// (meridional → septentrional → meridional → …) para que ninguna zona se
+// concentre al principio o al final.
+type DefinicionBloque = {
+  version: number;
+  meridionales: string[];
+  septentrionales: string[];
+};
+
+/** Los seis formularios fijos, tal cual los definió el equipo del estudio. */
+export const DEFINICION_BLOQUES: DefinicionBloque[] = [
+  { version: 1, meridionales: ['Granada', 'Cádiz', 'Badajoz'],   septentrionales: ['Madrid', 'Barcelona', 'Mallorca'] },
+  { version: 2, meridionales: ['Granada', 'Murcia', 'Tenerife'], septentrionales: ['Huesca', 'Guipúzcoa', 'A Coruña'] },
+  { version: 3, meridionales: ['Cádiz', 'Murcia', 'Tenerife'],   septentrionales: ['Asturias', 'Madrid', 'Huesca'] },
+  { version: 4, meridionales: ['Granada', 'Badajoz'],            septentrionales: ['Barcelona', 'Mallorca', 'Guipúzcoa', 'Asturias'] },
+  { version: 5, meridionales: ['Cádiz', 'Murcia'],               septentrionales: ['Madrid', 'A Coruña', 'Mallorca', 'Guipúzcoa'] },
+  { version: 6, meridionales: ['Badajoz', 'Tenerife'],           septentrionales: ['Barcelona', 'Huesca', 'A Coruña', 'Asturias'] },
+];
+
+/**
+ * Pon a `false` para desactivar el BIBD: entonces habrá una única versión con
+ * las 12 grabaciones (también alternadas meridional/septentrional).
+ */
+export const BIBD_ACTIVO = true;
+
 export type Bloque = { version: number; grabaciones: number[] };
 
-// Ventanas cíclicas de tamaño `tam` sobre `items`: [0..tam-1], [1..tam], …
-function ventanasCiclicas(items: number[], tam: number): number[][] {
-  if (tam <= 0 || items.length === 0) return [];
-  if (tam >= items.length) return [[...items]];
-  return items.map((_, i) =>
-    Array.from({ length: tam }, (_, j) => items[(i + j) % items.length])
-  );
+/**
+ * Intercala dos listas alternando zonas. Las meridionales se colocan en
+ * posiciones equiespaciadas empezando por la primera, y los huecos se rellenan
+ * con las septentrionales. Con 3 + 3 sale M-S-M-S-M-S; con 2 + 4, M-S-S-M-S-S.
+ */
+function intercalar(meridionales: number[], septentrionales: number[]): number[] {
+  const total = meridionales.length + septentrionales.length;
+  if (!meridionales.length) return [...septentrionales];
+  const out: (number | null)[] = new Array(total).fill(null);
+  meridionales.forEach((num, k) => {
+    out[Math.floor((k * total) / meridionales.length)] = num;
+  });
+  let j = 0;
+  for (let i = 0; i < total; i++) if (out[i] === null) out[i] = septentrionales[j++] ?? null;
+  return out.filter((n): n is number => n !== null);
 }
 
-export const BLOQUES: Bloque[] = (() => {
-  // Sin BIBD: un único bloque con todas las grabaciones.
-  if (GRABACIONES_POR_FORMULARIO >= NUM_GRABACIONES) {
-    return [{ version: 1, grabaciones: GRABACIONES.map((g) => g.numero) }];
+/** Nº de grabación a partir del nombre de la ciudad (como se escribe arriba). */
+function numeroDeCiudad(ciudad: string): number {
+  const g = GRABACIONES.find((x) => x.ciudad === ciudad);
+  if (!g) {
+    throw new Error(
+      `Ciudad «${ciudad}» usada en DEFINICION_BLOQUES pero ausente del catálogo de grabaciones.`
+    );
   }
-  const norte = GRABACIONES.filter((g) => g.zona === 'norte').map((g) => g.numero);
-  const sur = GRABACIONES.filter((g) => g.zona === 'sur').map((g) => g.numero);
-  const mitadNorte = Math.round(GRABACIONES_POR_FORMULARIO / 2);
-  const mitadSur = GRABACIONES_POR_FORMULARIO - mitadNorte;
-  const ventN = ventanasCiclicas(norte, mitadNorte);
-  const ventS = ventanasCiclicas(sur, mitadSur);
-  const total = Math.max(ventN.length, ventS.length) || 1;
-  const bloques: Bloque[] = [];
-  for (let i = 0; i < total; i++) {
-    const grabaciones = [
-      ...(ventN.length ? ventN[i % ventN.length] : []),
-      ...(ventS.length ? ventS[i % ventS.length] : []),
-    ].sort((a, b) => a - b);
-    bloques.push({ version: i + 1, grabaciones });
-  }
-  return bloques;
-})();
+  return g.numero;
+}
+
+export const BLOQUES: Bloque[] = BIBD_ACTIVO
+  ? DEFINICION_BLOQUES.map((d) => ({
+      version: d.version,
+      grabaciones: intercalar(
+        d.meridionales.map(numeroDeCiudad),
+        d.septentrionales.map(numeroDeCiudad)
+      ),
+    }))
+  : [
+      {
+        version: 1,
+        grabaciones: intercalar(
+          GRABACIONES.filter((g) => g.zona === 'meridional').map((g) => g.numero),
+          GRABACIONES.filter((g) => g.zona === 'septentrional').map((g) => g.numero)
+        ),
+      },
+    ];
 
 /** Nº de versiones distintas del formulario (bloques del BIBD). */
 export const NUM_BLOQUES = BLOQUES.length;
 
-/** Grabaciones (objetos completos) de una versión concreta del formulario. */
+/** Nº de grabaciones que evalúa CADA participante. */
+export const GRABACIONES_POR_FORMULARIO = BLOQUES[0]?.grabaciones.length ?? NUM_GRABACIONES;
+
+/**
+ * Veces que aparece cada grabación en el conjunto de formularios (la "réplica"
+ * del BIBD). Debe ser la MISMA para las 12; es lo que garantiza que, con el
+ * reparto equilibrado de participantes, todos los audios se escuchen igual.
+ */
+export const REPLICAS_POR_GRABACION: Record<number, number> = (() => {
+  const out: Record<number, number> = {};
+  for (const g of GRABACIONES) out[g.numero] = 0;
+  for (const b of BLOQUES) for (const n of b.grabaciones) out[n] = (out[n] ?? 0) + 1;
+  return out;
+})();
+
+/** true si las 12 grabaciones aparecen el mismo nº de veces (diseño válido). */
+export const BIBD_EQUILIBRADO = (() => {
+  const valores = Object.values(REPLICAS_POR_GRABACION);
+  return valores.length > 0 && new Set(valores).size === 1;
+})();
+
+if (!BIBD_EQUILIBRADO) {
+  // No lanzamos error para no tumbar el formulario en producción, pero queda
+  // avisado en los logs y visible en el panel /admin.
+  console.warn(
+    '[config] El diseño de bloques NO está equilibrado: alguna grabación aparece ' +
+      'en más formularios que otras. Réplicas:',
+    REPLICAS_POR_GRABACION
+  );
+}
+
+/**
+ * Grabaciones (objetos completos) de una versión concreta del formulario,
+ * EN EL ORDEN en que deben presentarse (zonas alternadas).
+ */
 export function grabacionesDeBloque(version: number): Grabacion[] {
   const b = BLOQUES.find((x) => x.version === version) ?? BLOQUES[0];
   return b.grabaciones
@@ -209,9 +287,11 @@ export const METODOS_ESTUDIO = [
 export const OTROS_IDIOMAS = ['Inglés', 'Francés', 'Amazigh', 'Árabe', 'Alemán', 'Otro'];
 export const NIVELES_IDIOMA = ['Básico', 'Avanzado', 'Muy avanzado', 'Nativo'];
 
-export const PUESTOS_TRABAJO = ['Poco cualificado', 'Bien cualificado', 'Altamente cualificado'];
 export const NIVELES_INGRESOS = ['Bajo', 'Medio', 'Alto'];
-export const NIVELES_ESTUDIOS_PERCIBIDOS = ['Sin estudios', 'Primarios', 'Secundarios', 'Universitarios'];
+// Nivel de estudios que el informante atribuye a quien habla. Sustituye a la
+// antigua pregunta sobre el «puesto de trabajo» (poco/bien/altamente
+// cualificado) y a la escala de 4 opciones anterior.
+export const NIVELES_ESTUDIOS_PERCIBIDOS = ['Bajo', 'Medio', 'Alto'];
 
 // Comunidades autónomas de España (para "¿de qué región crees que es?")
 export const COMUNIDADES = [

@@ -2,8 +2,15 @@
 import type { Grabacion } from '@/lib/config';
 export interface Props {
   grabacion: Grabacion;
+  /**
+   * Etiqueta a mostrar. El formulario pasa aquí la posición dentro del bloque
+   * («Grabación 1», «Grabación 2»…) para no revelar el nº global ni la ciudad
+   * del habla, que el participante no debe conocer.
+   */
+  titulo?: string;
 }
-const { grabacion } = Astro.props;
+const { grabacion, titulo } = Astro.props;
+const rotulo = titulo ?? grabacion.titulo;
 
 // Deduce el tipo MIME a partir de la extensión para que el navegador sepa
 // qué códec espera (importante con .ogg/.opus de WhatsApp).
@@ -32,7 +39,7 @@ const soundcloudSrc =
     <span class="flex h-8 w-8 items-center justify-center rounded-full bg-brand-600 text-white">
       🎧
     </span>
-    <span class="font-semibold">{grabacion.titulo}</span>
+    <span class="font-semibold">{rotulo}</span>
   </div>
 
   {
@@ -52,7 +59,7 @@ const soundcloudSrc =
       frameborder="no"
       allow="autoplay"
       src={soundcloudSrc}
-      title={grabacion.titulo}
+      title={rotulo}
     ></iframe>
   )}
 

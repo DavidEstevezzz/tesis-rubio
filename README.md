@@ -67,18 +67,45 @@ npm run preview  # previsualizar la build
 
 ## 🎧 Añadir las grabaciones
 
-Abre `src/lib/config.ts` y edita el array `GRABACIONES`. Para cada una indica su
-`url`. Admite dos formatos:
+Las 12 hablas del estudio están declaradas en el `CATALOGO` de
+`src/lib/config.ts`, cada una con su **ciudad**, su **zona dialectal**
+(`meridional` / `septentrional`) y el **nombre de archivo** en el bucket:
+
+| # | Ciudad | Zona | Archivo |
+| - | ------ | ---- | ------- |
+| 1 | Granada | meridional | `granada.ogg` |
+| 2 | Cádiz | meridional | `cadiz.ogg` |
+| 3 | Badajoz | meridional | `badajoz.ogg` |
+| 4 | Murcia | meridional | `murcia.ogg` |
+| 5 | Tenerife | meridional | `tenerife.ogg` |
+| 6 | Madrid | septentrional | `madrid.ogg` |
+| 7 | Barcelona | septentrional | `barcelona.ogg` |
+| 8 | Mallorca | septentrional | `mallorca.ogg` |
+| 9 | Huesca | septentrional | `huesca.ogg` |
+| 10 | Guipúzcoa | septentrional | `guipuzcoa.ogg` |
+| 11 | A Coruña | septentrional | `acoruna.ogg` |
+| 12 | Asturias | septentrional | `asturias.ogg` |
+
+Es decir: **la ciudad en minúscula, sin acentos ni espacios**, con extensión
+`.ogg`. Sube los 12 archivos con esos nombres exactos al bucket público
+`grabaciones` de Supabase Storage y funcionarán sin tocar nada más.
+
+> ⚠️ La ciudad es un dato **solo para el investigador**: el participante nunca la
+> ve (el estudio es a ciegas). En el formulario cada audio se rotula
+> «Grabación 1», «Grabación 2»… según su posición. La ciudad sí aparece en
+> `/admin` y en el CSV exportado.
+
+Si prefieres otros nombres, formatos o URLs externas, edita `CATALOGO` (o
+`GRABACIONES`) en `src/lib/config.ts`. Cada grabación admite:
 
 ```ts
-// Audio alojado (p. ej. en Supabase Storage, ver abajo). Admite .ogg/.opus, .mp3, .m4a, .wav
-{ numero: 1, titulo: 'Grabación 1', tipo: 'audio', url: 'https://.../muestra1.ogg' }
+// Audio alojado (p. ej. en Supabase Storage). Admite .ogg/.opus, .mp3, .m4a, .wav
+{ ciudad: 'Granada', archivo: 'granada', zona: 'meridional' }
 
-// Con audio de reserva para navegadores antiguos (opcional):
-{ numero: 1, titulo: 'Grabación 1', tipo: 'audio', url: 'https://.../muestra1.ogg', urlFallback: 'https://.../muestra1.m4a' }
+// Audio de reserva para navegadores antiguos: descomenta `urlFallback` en GRABACIONES
+// (p. ej. granada.m4a junto a granada.ogg).
 
-// Pista de SoundCloud
-{ numero: 1, titulo: 'Grabación 1', tipo: 'soundcloud', url: 'https://soundcloud.com/usuario/pista' }
+// Pista de SoundCloud: cambia `tipo` a 'soundcloud' y `url` a la pista pública.
 ```
 
 **Formatos de audio.** El reproductor usa el elemento `<audio>` nativo, que
@@ -95,31 +122,60 @@ admite **OGG/Opus** (el formato de los audios de WhatsApp), MP3, M4A/AAC y WAV.
 Al subir, comprueba que el _content-type_ sea `audio/ogg` (Supabase lo suele
 inferir por la extensión).
 
-El número total de grabaciones se controla con `NUM_GRABACIONES` (por defecto
-12). Si lo cambias, el formulario, la base de datos de respuestas y las
+El número total de grabaciones (`NUM_GRABACIONES`) se deduce del `CATALOGO`. Si
+añades o quitas hablas, el formulario, la base de datos de respuestas y las
 estadísticas se adaptan automáticamente.
 
 ## 🎛️ Diseño de bloques incompletos balanceados (BIBD)
 
-El formulario completo (las 12 grabaciones) dura demasiado (~40 min) y el
-cansancio arruina las respuestas. Para no eliminar ninguna grabación, cada
-participante evalúa **solo un subconjunto** equilibrado. Se controla en
-`src/lib/config.ts`:
+El formulario con las 12 grabaciones duraba ~40 min y el cansancio arruinaba las
+respuestas. Para no suprimir ninguna grabación, **cada informante evalúa solo 6**
+según seis formularios fijos (`DEFINICION_BLOQUES` en `src/lib/config.ts`):
 
-- **`GRABACIONES_POR_FORMULARIO`** (por defecto `6`): cuántas grabaciones ve
-  cada informante. Ponlo igual a `NUM_GRABACIONES` para desactivar el BIBD.
-- **`ZONA_POR_GRABACION`**: clasifica cada muestra como `'norte'` o `'sur'`.
-  ⚠️ **Ajústala con la zona real de cada grabación** (de partida, 1–6 = norte,
-  7–12 = sur). Debe haber 6 y 6 para que cada formulario quede 3 + 3.
+| Formulario | Meridionales | Septentrionales |
+| ---------- | ------------ | --------------- |
+| **F1** | Granada, Cádiz, Badajoz | Madrid, Barcelona, Mallorca |
+| **F2** | Granada, Murcia, Tenerife | Huesca, Guipúzcoa, A Coruña |
+| **F3** | Cádiz, Murcia, Tenerife | Asturias, Madrid, Huesca |
+| **F4** | Granada, Badajoz | Barcelona, Mallorca, Guipúzcoa, Asturias |
+| **F5** | Cádiz, Murcia | Madrid, A Coruña, Mallorca, Guipúzcoa |
+| **F6** | Badajoz, Tenerife | Barcelona, Huesca, A Coruña, Asturias |
 
-A partir de eso, `BLOQUES` genera automáticamente las versiones del formulario
-(ventanas cíclicas dentro de cada zona): cada versión queda equilibrada
-norte/sur y cada grabación aparece en el mismo número de bloques. A cada
-participante se le asigna una versión de forma **rotatoria** según cuántos ya
-han respondido, de modo que todas las grabaciones reciben un número similar de
-valoraciones. Puedes previsualizar una versión concreta con `?bloque=N` (p. ej.
-`/formulario?bloque=3`). El panel de administración muestra el reparto de
-participantes por bloque.
+Dentro de cada formulario las hablas se presentan **alternando zonas**
+(meridional → septentrional → meridional → …), así que el orden real es:
+
+```
+F1  Granada → Madrid → Cádiz → Barcelona → Badajoz → Mallorca
+F2  Granada → Huesca → Murcia → Guipúzcoa → Tenerife → A Coruña
+F3  Cádiz → Asturias → Murcia → Madrid → Tenerife → Huesca
+F4  Granada → Barcelona → Mallorca → Badajoz → Guipúzcoa → Asturias
+F5  Cádiz → Madrid → A Coruña → Murcia → Mallorca → Guipúzcoa
+F6  Badajoz → Barcelona → Huesca → Tenerife → A Coruña → Asturias
+```
+
+**Por qué queda equilibrado.** Cada una de las 12 grabaciones aparece en
+**exactamente 3 de los 6 formularios** (`REPLICAS_POR_GRABACION`). Al cargar
+`/formulario` se asigna al participante la versión con **menos participantes
+completados** hasta ese momento (empates → al azar), así que las seis versiones
+se llenan a la par y, con ellas, todas las grabaciones reciben el mismo número de
+escuchas:
+
+| Participantes | Por versión | Escuchas por audio |
+| ------------- | ----------- | ------------------ |
+| 12 | 2 cada una | 6 (brecha 0) |
+| 20 | 3-4 | 9-11 |
+| 30 | 5 cada una | 15 (brecha 0) |
+
+El reparto se autocorrige ante ráfagas o abandonos (solo cuentan los formularios
+enviados). Los múltiplos de 6 dan un equilibrio perfecto.
+
+Otras opciones:
+
+- **`BIBD_ACTIVO`**: ponlo a `false` para volver a un único formulario con las 12
+  grabaciones (también con zonas alternadas).
+- **`?bloque=N`** previsualiza una versión concreta (p. ej. `/formulario?bloque=3`).
+- El panel `/admin` muestra el reparto por versión, las escuchas de cada audio
+  con su ciudad y un aviso si el diseño deja de estar equilibrado.
 
 ## 🛠️ Personalizar el formulario
 

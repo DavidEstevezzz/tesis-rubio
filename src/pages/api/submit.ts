@@ -121,9 +121,10 @@ export const POST: APIRoute = async ({ request }) => {
       aspecto_gustado: data[`${p}_aspecto_gustado`] || null,
       aspecto_disgustado: data[`${p}_aspecto_disgustado`] || null,
       proximidad: asInt(data[`${p}_proximidad`]),
-      puesto_trabajo: data[`${p}_puesto_trabajo`] || null,
-      nivel_ingresos: data[`${p}_nivel_ingresos`] || null,
+      // Nivel de estudios percibido (Bajo/Medio/Alto). Sustituye a la antigua
+      // pregunta sobre el «puesto de trabajo», que ya no se hace.
       nivel_estudios: data[`${p}_nivel_estudios`] || null,
+      nivel_ingresos: data[`${p}_nivel_ingresos`] || null,
       escala_persona: escala(data, `${p}_persona`, ESCALA_PERSONA),
       region_percibida: data[`${p}_region_percibida`] || null,
       conoce_personas_region: asBool(data[`${p}_conoce_personas_region`]),
