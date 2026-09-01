@@ -33,6 +33,12 @@ export type Grabacion = {
   etiqueta: string;
   tipo: 'audio' | 'soundcloud';
   zona: Zona;
+  /**
+   * Comunidad autónoma real del habla. Sirve para medir aciertos: se compara
+   * con la región que el participante cree reconocer (`region_percibida`).
+   * Como la ciudad, es dato SOLO para el investigador.
+   */
+  comunidad: string;
   /** URL del audio principal. Admite .ogg/.opus (WhatsApp), .mp3, .m4a, .wav… */
   url: string;
   /**
@@ -94,21 +100,28 @@ export const EXTENSION_AUDIO = EXTENSIONES_AUDIO[0];
  * un nombre o una extensión distintos, se puede fijar en `archivoExacto`
  * (con extensión incluida) y se usará ese y solo ese.
  */
-const CATALOGO: { ciudad: string; archivo: string; zona: Zona; archivoExacto?: string }[] = [
+const CATALOGO: {
+  ciudad: string;
+  archivo: string;
+  zona: Zona;
+  /** Comunidad autónoma, tal cual se escribe en COMUNIDADES (para los aciertos). */
+  comunidad: string;
+  archivoExacto?: string;
+}[] = [
   // Hablas meridionales (5)
-  { ciudad: 'Granada',    archivo: 'granada',    zona: 'meridional' },
-  { ciudad: 'Cádiz',      archivo: 'cadiz',      zona: 'meridional' },
-  { ciudad: 'Badajoz',    archivo: 'badajoz',    zona: 'meridional' },
-  { ciudad: 'Murcia',     archivo: 'murcia',     zona: 'meridional' },
-  { ciudad: 'Tenerife',   archivo: 'tenerife',   zona: 'meridional' },
+  { ciudad: 'Granada',    archivo: 'granada',    zona: 'meridional',    comunidad: 'Andalucía' },
+  { ciudad: 'Cádiz',      archivo: 'cadiz',      zona: 'meridional',    comunidad: 'Andalucía' },
+  { ciudad: 'Badajoz',    archivo: 'badajoz',    zona: 'meridional',    comunidad: 'Extremadura' },
+  { ciudad: 'Murcia',     archivo: 'murcia',     zona: 'meridional',    comunidad: 'Región de Murcia' },
+  { ciudad: 'Tenerife',   archivo: 'tenerife',   zona: 'meridional',    comunidad: 'Canarias' },
   // Hablas septentrionales (7)
-  { ciudad: 'Madrid',     archivo: 'madrid',     zona: 'septentrional' },
-  { ciudad: 'Barcelona',  archivo: 'barcelona',  zona: 'septentrional' },
-  { ciudad: 'Mallorca',   archivo: 'mallorca',   zona: 'septentrional' },
-  { ciudad: 'Huesca',     archivo: 'huesca',     zona: 'septentrional' },
-  { ciudad: 'Guipúzcoa',  archivo: 'guipuzcoa',  zona: 'septentrional' },
-  { ciudad: 'A Coruña',   archivo: 'acoruna',    zona: 'septentrional' },
-  { ciudad: 'Asturias',   archivo: 'asturias',   zona: 'septentrional' },
+  { ciudad: 'Madrid',     archivo: 'madrid',     zona: 'septentrional', comunidad: 'Comunidad de Madrid' },
+  { ciudad: 'Barcelona',  archivo: 'barcelona',  zona: 'septentrional', comunidad: 'Cataluña' },
+  { ciudad: 'Mallorca',   archivo: 'mallorca',   zona: 'septentrional', comunidad: 'Islas Baleares' },
+  { ciudad: 'Huesca',     archivo: 'huesca',     zona: 'septentrional', comunidad: 'Aragón' },
+  { ciudad: 'Guipúzcoa',  archivo: 'guipuzcoa',  zona: 'septentrional', comunidad: 'País Vasco' },
+  { ciudad: 'A Coruña',   archivo: 'acoruna',    zona: 'septentrional', comunidad: 'Galicia' },
+  { ciudad: 'Asturias',   archivo: 'asturias',   zona: 'septentrional', comunidad: 'Asturias' },
 ];
 
 /** Número total de grabaciones del estudio (el "pool" completo). */
@@ -121,6 +134,7 @@ export const GRABACIONES: Grabacion[] = CATALOGO.map((c, i) => ({
   etiqueta: `${i + 1} · ${c.ciudad}`,
   tipo: 'audio' as const,
   zona: c.zona,
+  comunidad: c.comunidad,
   ...(() => {
     const fuentes = c.archivoExacto
       ? [storageUrl(c.archivoExacto)]
