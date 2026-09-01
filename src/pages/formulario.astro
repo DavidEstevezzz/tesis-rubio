@@ -348,8 +348,21 @@ const totalGrab = grabaciones.length;
     const formMsg = document.getElementById('formMsg') as HTMLElement;
     stepTotal.textContent = String(total);
 
+    /**
+     * Detiene cualquier audio que quede fuera del paso visible. Sin esto, si el
+     * participante avanza con la grabación sonando, esta sigue reproduciéndose
+     * de fondo mientras valora la siguiente. Se conserva el minuto en el que iba
+     * (pause, no reset), así que al volver atrás retoma donde lo dejó.
+     */
+    function pausarAudiosFuera(visible: HTMLElement) {
+      form.querySelectorAll<HTMLAudioElement>('audio').forEach((audio) => {
+        if (!visible.contains(audio) && !audio.paused) audio.pause();
+      });
+    }
+
     function render() {
       wrappers.forEach((w, i) => w.classList.toggle('hidden', i !== current));
+      pausarAudiosFuera(wrappers[current]);
       const label = steps[current].dataset.stepLabel ?? '';
       stepLabel.textContent = label;
       stepNum.textContent = String(current + 1);
