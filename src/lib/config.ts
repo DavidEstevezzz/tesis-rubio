@@ -36,6 +36,13 @@ export type Grabacion = {
   /** URL del audio principal. Admite .ogg/.opus (WhatsApp), .mp3, .m4a, .wav… */
   url: string;
   /**
+   * Todas las URLs candidatas para este audio, en orden de preferencia
+   * (la primera es `url`). El navegador prueba una a una y se queda con la
+   * primera que exista y sepa reproducir, así que da igual que un audio esté
+   * subido en .ogg y otro en .mp3.
+   */
+  fuentes: string[];
+  /**
    * (Opcional) URL de un audio de reserva en otro formato, por si el
    * principal no es compatible con algún navegador. Ejemplo típico: subir el
    * .ogg como `url` y un .m4a (AAC) como `urlFallback` para cubrir iPhones
@@ -53,14 +60,30 @@ const SUPABASE_URL = import.meta.env.PUBLIC_SUPABASE_URL ?? '';
 export const storageUrl = (archivo: string) =>
   `${SUPABASE_URL}/storage/v1/object/public/${BUCKET_GRABACIONES}/${encodeURIComponent(archivo)}`;
 
-/** Extensión de los audios del bucket (todos comparten formato). */
-export const EXTENSION_AUDIO = '.ogg';
+/**
+ * Extensiones que se prueban para cada audio, en este orden. No hace falta que
+ * todos los archivos compartan formato: si `granada` está subido como .ogg y
+ * `madrid` como .mp3, cada uno se resuelve solo (las URLs que no existen dan
+ * 404 y el navegador pasa a la siguiente).
+ *
+ * Los audios de WhatsApp se exportan normalmente como .ogg (u .opus) y a veces
+ * como .mp3 o .m4a, por eso están las cuatro.
+ */
+export const EXTENSIONES_AUDIO = ['.ogg', '.opus', '.mp3', '.m4a', '.wav'] as const;
+
+/** Extensión preferida (la primera de la lista). Se mantiene por compatibilidad. */
+export const EXTENSION_AUDIO = EXTENSIONES_AUDIO[0];
 
 // ── Las 12 hablas del estudio ──────────────────────────────────────────────
 // El nombre del archivo es la ciudad en minúscula, sin acentos ni espacios,
 // más la extensión: granada.ogg, cadiz.ogg, acoruna.ogg, guipuzcoa.ogg…
 // → Sube los 12 audios al bucket "grabaciones" (público) con ESOS nombres.
-const CATALOGO: { ciudad: string; archivo: string; zona: Zona }[] = [
+/**
+ * `archivo` es el nombre SIN extensión. Si un audio concreto está subido con
+ * un nombre o una extensión distintos, se puede fijar en `archivoExacto`
+ * (con extensión incluida) y se usará ese y solo ese.
+ */
+const CATALOGO: { ciudad: string; archivo: string; zona: Zona; archivoExacto?: string }[] = [
   // Hablas meridionales (5)
   { ciudad: 'Granada',    archivo: 'granada',    zona: 'meridional' },
   { ciudad: 'Cádiz',      archivo: 'cadiz',      zona: 'meridional' },
@@ -87,9 +110,12 @@ export const GRABACIONES: Grabacion[] = CATALOGO.map((c, i) => ({
   etiqueta: `${i + 1} · ${c.ciudad}`,
   tipo: 'audio' as const,
   zona: c.zona,
-  url: storageUrl(`${c.archivo}${EXTENSION_AUDIO}`),
-  // Opcional: descomenta para un audio de reserva (iPhones antiguos):
-  // urlFallback: storageUrl(`${c.archivo}.m4a`),
+  ...(() => {
+    const fuentes = c.archivoExacto
+      ? [storageUrl(c.archivoExacto)]
+      : EXTENSIONES_AUDIO.map((ext) => storageUrl(`${c.archivo}${ext}`));
+    return { url: fuentes[0], fuentes };
+  })(),
 }));
 
 // ── Diseño de bloques incompletos balanceados (BIBD) ────────────────────────
