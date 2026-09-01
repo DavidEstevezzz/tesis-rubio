@@ -16,12 +16,17 @@ import {
   NIVELES_ESTUDIOS_PERCIBIDOS,
   COMUNIDADES,
   type ItemDiferencial,
+  type Zona,
 } from './config';
 
 export type Participante = Record<string, any>;
 export type Valoracion = Record<string, any>;
 
 const round = (n: number, d = 2) => Math.round(n * 10 ** d) / 10 ** d;
+
+/** «A Coruña» → «acoruna». Se usa como id de pestaña y ancla de la URL. */
+export const slugify = (s: string) =>
+  s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '');
 
 function avg(nums: number[]): number {
   const valid = nums.filter((n) => typeof n === 'number' && !Number.isNaN(n));
@@ -95,19 +100,25 @@ export function computeStats(participantes: Participante[], valoraciones: Valora
     visitadoOtros: boolCount(participantes, 'visitado_otros_paises'),
   };
 
-  // ── Por grabación ──
+  // ── Por grabación (cada ciudad tiene su propia pestaña en el panel) ──
   const porGrabacion = GRABACIONES.map((g) => {
     const vals = valoraciones.filter((v) => v.grabacion === g.numero);
     const voz = mediasEscala(vals, 'escala_voz', ESCALA_VOZ);
     const persona = mediasEscala(vals, 'escala_persona', ESCALA_PERSONA);
     const cultura = mediasEscala(vals, 'escala_cultura', ESCALA_CULTURA);
+    // ¿Cuántos sitúan el habla en su comunidad real?
+    const conRegion = vals.filter((v) => v.region_percibida);
+    const aciertos = conRegion.filter((v) => v.region_percibida === g.comunidad).length;
     return {
       numero: g.numero,
       titulo: g.titulo,
-      // Ciudad y zona: solo para el panel de investigadores.
+      // Ciudad, zona y comunidad: solo para el panel de investigadores.
       ciudad: g.ciudad,
       zona: g.zona,
+      comunidad: g.comunidad,
       etiqueta: g.etiqueta,
+      // Clave estable para enlazar la pestaña (#granada, #acoruna…).
+      slug: slugify(g.ciudad),
       n: vals.length,
       mediaVozGlobal: avg(voz.map((x) => x.media)),
       mediaPersonaGlobal: avg(persona.map((x) => x.media)),
@@ -118,6 +129,20 @@ export function computeStats(participantes: Participante[], valoraciones: Valora
       cultura,
       ingresos: distribucion(countBy(vals, (v) => v.nivel_ingresos), NIVELES_INGRESOS),
       estudios: distribucion(countBy(vals, (v) => v.nivel_estudios), NIVELES_ESTUDIOS_PERCIBIDOS),
+      proximidadDist: distribucion(
+        countBy(vals, (v) => (v.proximidad ? String(v.proximidad) : null)),
+        ['1', '2', '3', '4', '5']
+      ),
+      regionPercibida: distribucion(countBy(vals, (v) => v.region_percibida), COMUNIDADES),
+      genero: {
+        tratoDiferenciado: boolCount(vals, 'trato_diferenciado'),
+        tratoMujerDiferente: boolCount(vals, 'trato_mujer_diferente'),
+      },
+      acierto: {
+        aciertos,
+        fallos: conRegion.length - aciertos,
+        porcentaje: conRegion.length ? round((aciertos / conRegion.length) * 100, 1) : 0,
+      },
     };
   });
 
@@ -178,6 +203,79 @@ export function computeStats(participantes: Participante[], valoraciones: Valora
     disenoEquilibrado: BIBD_EQUILIBRADO,
   };
 
+  // ── Comparativa entre ciudades (pestaña «Global») ───────────────────────
+  // Todas las series comparten el mismo orden de ciudades, así que cualquier
+  // gráfica de barras agrupadas o apiladas puede cruzarlas directamente.
+  const ciudades = porGrabacion.map((g) => g.ciudad);
+
+  /** Para cada par de adjetivos, la media de las 12 ciudades (una serie por ítem). */
+  const porItem = (campo: 'voz' | 'persona' | 'cultura', items: ItemDiferencial[]) =>
+    items.map((it) => ({
+      id: it.id,
+      etiqueta: `${it.negativo} – ${it.positivo}`,
+      positivo: it.positivo,
+      data: porGrabacion.map((g) => g[campo].find((x) => x.id === it.id)?.media ?? 0),
+    }));
+
+  /** Medias de una zona dialectal completa (todas sus grabaciones juntas). */
+  const perfilZona = (zona: Zona) => {
+    const numeros = GRABACIONES.filter((g) => g.zona === zona).map((g) => g.numero);
+    const vals = valoraciones.filter((v) => numeros.includes(Number(v.grabacion)));
+    return {
+      n: vals.length,
+      voz: mediasEscala(vals, 'escala_voz', ESCALA_VOZ),
+      persona: mediasEscala(vals, 'escala_persona', ESCALA_PERSONA),
+      cultura: mediasEscala(vals, 'escala_cultura', ESCALA_CULTURA),
+      proximidad: avg(vals.map((v) => Number(v.proximidad))),
+    };
+  };
+
+  /** Reparto de una pregunta categórica ciudad a ciudad (para barras apiladas). */
+  const apiladoPorCiudad = (campo: 'ingresos' | 'estudios', catalogo: string[]) =>
+    catalogo.map((nivel) => ({
+      nivel,
+      data: porGrabacion.map((g) => {
+        const i = g[campo].labels.indexOf(nivel);
+        return i === -1 ? 0 : g[campo].data[i];
+      }),
+    }));
+
+  const comparativa = {
+    ciudades,
+    etiquetas: porGrabacion.map((g) => g.etiqueta),
+    zonas: porGrabacion.map((g) => g.zona),
+    n: porGrabacion.map((g) => g.n),
+    // Las cuatro medidas resumen, ciudad a ciudad (barras agrupadas).
+    medias: {
+      voz: porGrabacion.map((g) => g.mediaVozGlobal),
+      persona: porGrabacion.map((g) => g.mediaPersonaGlobal),
+      cultura: porGrabacion.map((g) => g.mediaCulturaGlobal),
+      proximidad: porGrabacion.map((g) => g.proximidad),
+    },
+    // Adjetivo por adjetivo: alimenta el selector «compara este rasgo».
+    vozPorItem: porItem('voz', ESCALA_VOZ),
+    personaPorItem: porItem('persona', ESCALA_PERSONA),
+    culturaPorItem: porItem('cultura', ESCALA_CULTURA),
+    // Meridional vs septentrional, el eje que equilibra el estudio.
+    zona: {
+      meridional: perfilZona('meridional'),
+      septentrional: perfilZona('septentrional'),
+    },
+    ingresosPorCiudad: apiladoPorCiudad('ingresos', NIVELES_INGRESOS),
+    estudiosPorCiudad: apiladoPorCiudad('estudios', NIVELES_ESTUDIOS_PERCIBIDOS),
+    aciertoRegion: porGrabacion.map((g) => g.acierto.porcentaje),
+    generoPorCiudad: {
+      tratoDiferenciado: {
+        si: porGrabacion.map((g) => g.genero.tratoDiferenciado.si),
+        no: porGrabacion.map((g) => g.genero.tratoDiferenciado.no),
+      },
+      tratoMujerDiferente: {
+        si: porGrabacion.map((g) => g.genero.tratoMujerDiferente.si),
+        no: porGrabacion.map((g) => g.genero.tratoMujerDiferente.no),
+      },
+    },
+  };
+
   // Ranking de grabaciones por agradabilidad de la voz
   const ranking = [...porGrabacion]
     .filter((g) => g.n > 0)
@@ -201,6 +299,7 @@ export function computeStats(participantes: Participante[], valoraciones: Valora
       proximidadDist,
     },
     porGrabacion,
+    comparativa,
     ranking,
     genero_preguntas,
     bloques,
