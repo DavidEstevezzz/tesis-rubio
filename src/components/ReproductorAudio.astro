@@ -17,7 +17,8 @@ const rotulo = titulo ?? grabacion.titulo;
 function mime(url: string): string | undefined {
   const clean = url.split('?')[0].toLowerCase();
   if (clean.endsWith('.ogg') || clean.endsWith('.opus')) return 'audio/ogg; codecs=opus';
-  if (clean.endsWith('.mp3')) return 'audio/mpeg';
+  if (clean.endsWith('.mp3') || clean.endsWith('.mpeg') || clean.endsWith('.mpga'))
+    return 'audio/mpeg';
   if (clean.endsWith('.m4a') || clean.endsWith('.aac') || clean.endsWith('.mp4')) return 'audio/mp4';
   if (clean.endsWith('.wav')) return 'audio/wav';
   if (clean.endsWith('.webm')) return 'audio/webm';

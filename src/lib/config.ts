@@ -69,7 +69,18 @@ export const storageUrl = (archivo: string) =>
  * Los audios de WhatsApp se exportan normalmente como .ogg (u .opus) y a veces
  * como .mp3 o .m4a, por eso están las cuatro.
  */
-export const EXTENSIONES_AUDIO = ['.ogg', '.opus', '.mp3', '.m4a', '.wav'] as const;
+export const EXTENSIONES_AUDIO = [
+  '.ogg',
+  '.opus',
+  '.mp3',
+  '.m4a',
+  '.aac',
+  '.wav',
+  // Variantes menos habituales del MP3 (mismo MIME, audio/mpeg): algunos
+  // exportadores y conversores las usan en lugar de .mp3.
+  '.mpeg',
+  '.mpga',
+] as const;
 
 /** Extensión preferida (la primera de la lista). Se mantiene por compatibilidad. */
 export const EXTENSION_AUDIO = EXTENSIONES_AUDIO[0];
