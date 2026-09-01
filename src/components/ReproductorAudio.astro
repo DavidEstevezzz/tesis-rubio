@@ -24,7 +24,12 @@ function mime(url: string): string | undefined {
   return undefined;
 }
 
-const fuentes = [grabacion.url, grabacion.urlFallback].filter(Boolean) as string[];
+// Todas las candidatas: las declaradas en el catálogo (mismo nombre con
+// distintas extensiones) más el fallback manual, sin repetir.
+const fuentes = [
+  ...(grabacion.fuentes ?? [grabacion.url]),
+  grabacion.urlFallback,
+].filter((u, i, arr): u is string => Boolean(u) && arr.indexOf(u) === i);
 
 const soundcloudSrc =
   grabacion.tipo === 'soundcloud' && grabacion.url
@@ -44,10 +49,19 @@ const soundcloudSrc =
 
   {
     grabacion.tipo === 'audio' && grabacion.url && (
-      <audio controls preload="none" class="w-full">
-        {fuentes.map((src) => <source src={src} type={mime(src)} />)}
-        Tu navegador no admite la reproducción de este audio.
-      </audio>
+      <>
+        <audio controls preload="metadata" class="audio-grabacion w-full">
+          {fuentes.map((src) => <source src={src} type={mime(src)} />)}
+          Tu navegador no admite la reproducción de este audio.
+        </audio>
+        <p
+          class="audio-error mt-2 hidden rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800"
+          role="alert"
+        >
+          No se ha podido cargar este audio. Comprueba tu conexión y vuelve a
+          intentarlo; si el problema persiste, avisa al investigador.
+        </p>
+      </>
     )
   }
 
@@ -75,3 +89,18 @@ const soundcloudSrc =
     )
   }
 </div>
+
+<script>
+  // Un <audio> con varias <source> solo dispara "error" en el propio elemento
+  // cuando TODAS han fallado (404 o formato no soportado): ahí avisamos.
+  document.querySelectorAll('audio.audio-grabacion').forEach((audio) => {
+    audio.addEventListener('error', () => {
+      const aviso = audio.parentElement?.querySelector('.audio-error');
+      if (aviso) aviso.classList.remove('hidden');
+      console.error(
+        '[audio] Ninguna fuente se pudo cargar:',
+        Array.from(audio.querySelectorAll('source')).map((s) => s.getAttribute('src'))
+      );
+    });
+  });
+</script>
