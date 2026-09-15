@@ -8,7 +8,8 @@
 --        Vuelve a /admin y recarga: las gráficas quedan totalmente pobladas.
 --
 --  Para BORRAR luego estos datos de prueba (los reales NO se tocan, van por
---  email 'prueba..@ejemplo.test'):
+--  email 'prueba..@ejemplo.test') usa supabase/limpiar_pruebas.sql, o
+--  directamente:
 --
 --    delete from public.participantes where email like 'prueba%@ejemplo.test';
 --    -- (las valoraciones se borran solas por ON DELETE CASCADE)
