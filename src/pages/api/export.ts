@@ -17,9 +17,11 @@ export const GET: APIRoute = async () => {
 
   const pCols = [
     'email', 'bloque', 'genero', 'genero_otro', 'edad', 'ciudad_nacimiento', 'ciudad_residencia',
-    'lenguas_maternas', 'estudia', 'que_estudias', 'trabaja', 'cual_trabajo',
+    'lenguas_maternas', 'otros_idiomas_otro',
+    'estudia', 'que_estudias', 'trabaja', 'cual_trabajo',
     'nivel_educativo', 'anios_estudio_espanol',
-    'metodos_estudio', 'metodos_ejemplos', 'nivel_espanol', 'familia_espana',
+    'metodos_estudio', 'metodos_estudio_otro',
+    'metodos_ejemplos', 'nivel_espanol', 'familia_espana',
     'familia_espana_zonas', 'visitado_espana', 'visitado_espana_tiempo',
     'visitado_espana_zonas', 'mejor_region_opinion', 'visitado_otros_paises',
     'visitado_otros_paises_cuales', 'visitado_otros_paises_tiempo',

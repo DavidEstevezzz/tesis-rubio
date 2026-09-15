@@ -301,14 +301,14 @@ export const ESCALA_PERSONA: ItemDiferencial[] = [
 export const ESCALA_CULTURA: ItemDiferencial[] = [
   { id: 'innovadora', negativo: 'Tradicional', positivo: 'Innovadora' },
   { id: 'divertida', negativo: 'Aburrida', positivo: 'Divertida' },
-  { id: 'familiar', negativo: 'Extraña', positivo: 'Familiar' },
+  { id: 'conocida', negativo: 'Desconocida', positivo: 'Conocida' },
   { id: 'cercana', negativo: 'Distante', positivo: 'Cercana' },
   { id: 'rica', negativo: 'Pobre', positivo: 'Rica' },
   { id: 'interesante', negativo: 'Poco interesante', positivo: 'Interesante' },
 ];
 
 // ── Opciones de campos cerrados ─────────────────────────────────────────────
-export const GENEROS = ['Femenino', 'Masculino', 'Prefiero no decirlo', 'Otro'];
+export const GENEROS = ['Femenino', 'Masculino', 'Otro'];
 
 export const NIVELES_EDUCATIVOS = [
   'Educación primaria',

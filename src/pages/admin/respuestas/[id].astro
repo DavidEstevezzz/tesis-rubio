@@ -30,14 +30,24 @@ const datos: [string, any][] = [
   ['Ciudad de nacimiento', p.ciudad_nacimiento],
   ['Ciudad de residencia', p.ciudad_residencia],
   ['Lenguas maternas', p.lenguas_maternas],
-  ['Otros idiomas', Object.entries(p.otros_idiomas ?? {}).map(([k, v]) => `${k}: ${v}`).join(', ') || '—'],
+  [
+    'Otros idiomas',
+    Object.entries(p.otros_idiomas ?? {})
+      .map(([k, v]) => (k === 'Otro' && p.otros_idiomas_otro ? `${p.otros_idiomas_otro}: ${v}` : `${k}: ${v}`))
+      .join(', ') || '—',
+  ],
   ['¿Estudia?', fmt(p.estudia)],
   ['¿Qué estudia?', p.que_estudias],
   ['¿Trabaja?', fmt(p.trabaja)],
   ['¿Cuál es su trabajo?', p.cual_trabajo],
   ['Nivel educativo', p.nivel_educativo],
   ['Años de estudio del español', p.anios_estudio_espanol],
-  ['Métodos de estudio', (p.metodos_estudio ?? []).join(', ') || '—'],
+  [
+    'Métodos de estudio',
+    (p.metodos_estudio ?? [])
+      .map((m: string) => (m === 'Otro' && p.metodos_estudio_otro ? `Otro (${p.metodos_estudio_otro})` : m))
+      .join(', ') || '—',
+  ],
   ['Ejemplos de métodos', p.metodos_ejemplos],
   ['Nivel en español', p.nivel_espanol],
   ['¿Familia en España?', fmt(p.familia_espana)],

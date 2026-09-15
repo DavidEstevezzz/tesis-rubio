@@ -17,6 +17,7 @@ create table if not exists public.participantes (
   ciudad_residencia           text,
   lenguas_maternas            text,
   otros_idiomas               jsonb default '{}'::jsonb,  -- { "Inglés": "Avanzado", ... }
+  otros_idiomas_otro          text,      -- qué idioma es el «Otro» de ese cuadro
   estudia                     boolean,
   que_estudias                text,      -- si estudia = true
   trabaja                     boolean,
@@ -24,6 +25,7 @@ create table if not exists public.participantes (
   nivel_educativo             text,
   anios_estudio_espanol       int,
   metodos_estudio             text[] default '{}',
+  metodos_estudio_otro        text,      -- qué método es el «Otro» de esa lista
   metodos_ejemplos            text,
   nivel_espanol               text,
   familia_espana              boolean,
@@ -101,6 +103,10 @@ alter table public.participantes add column if not exists visitado_espana_zonas 
 alter table public.participantes add column if not exists visitado_otros_paises_cuales text;
 alter table public.participantes add column if not exists visitado_otros_paises_tiempo text;
 alter table public.valoraciones  add column if not exists conoce_personas_region_opinion text;
+
+-- Casillas de texto de las opciones «Otro» (idioma y método de estudio).
+alter table public.participantes add column if not exists otros_idiomas_otro    text;
+alter table public.participantes add column if not exists metodos_estudio_otro  text;
 
 -- Las preguntas sobre el género pasaron de participantes → valoraciones
 -- (ahora se responden una vez por grabación). Se añaden a valoraciones; las

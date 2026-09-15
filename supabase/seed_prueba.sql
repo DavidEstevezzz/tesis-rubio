@@ -41,7 +41,7 @@ nuevos as (
   )
   select
     'prueba' || lpad(i::text, 2, '0') || '@ejemplo.test',
-    (array['Femenino','Masculino','Femenino','Masculino','Prefiero no decirlo','Otro'])[(1 + floor(random()*6))::int],
+    (array['Femenino','Masculino','Femenino','Masculino','Femenino','Otro'])[(1 + floor(random()*6))::int],
     null,
     (18 + floor(random()*45))::int,                                                  -- 18–62 años
     (array['Tánger','Tetuán','Rabat','Casablanca','Nador','Alhucemas','Fez','Uxda'])[(1 + floor(random()*8))::int],
@@ -97,7 +97,7 @@ select
   random() < 0.5,                                                                    -- conoce personas de esa región
   -- Escala de la CULTURA (6 ítems, 1–5)
   (select jsonb_object_agg(k, least(5, greatest(1, (qq.q + (random()-0.5)*2.4)::int)))
-     from unnest(array['innovadora','divertida','familiar','cercana','rica','interesante']) as k),
+     from unnest(array['innovadora','divertida','conocida','cercana','rica','interesante']) as k),
   -- Reflexión sobre el género (una por grabación)
   random() < 0.5,                                                                    -- trato diferenciado Mariam/Omar
   random() < 0.5,                                                                    -- trato distinto con jefa mujer
