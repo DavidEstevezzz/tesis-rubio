@@ -222,5 +222,8 @@ src/
     admin/               ← panel protegido (resumen, respuestas, detalle)
     api/                 ← submit, export CSV, login/logout
   middleware.ts      ← protege /admin y /api/export
-supabase/schema.sql  ← esquema de la base de datos
+supabase/
+  schema.sql         ← esquema de la base de datos
+  seed_prueba.sql    ← datos de ejemplo para ver el panel poblado
+  limpiar_pruebas.sql ← borrado de esos datos (y de todo, si hace falta)
 ```
