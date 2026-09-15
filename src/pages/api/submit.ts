@@ -67,6 +67,14 @@ export const POST: APIRoute = async ({ request }) => {
     const nivel = data[`idioma_${idioma}`];
     if (nivel) otrosIdiomas[idioma] = String(nivel);
   }
+  // El idioma escrito en la casilla de «Otro» solo tiene sentido si se marcó
+  // algún nivel en esa fila.
+  const idiomaOtroCual = otrosIdiomas['Otro'] ? String(data.idioma_otro_cual || '').trim() : '';
+  // Lo mismo con el método de estudio escrito en la casilla de «Otro».
+  const metodosEstudio = Array.isArray(data.metodos_estudio) ? data.metodos_estudio : [];
+  const metodosEstudioOtro = metodosEstudio.includes('Otro')
+    ? String(data.metodos_estudio_otro || '').trim()
+    : '';
 
   // 3) Insertar participante
   const { data: participante, error: pErr } = await supabase
@@ -80,13 +88,15 @@ export const POST: APIRoute = async ({ request }) => {
       ciudad_residencia: data.ciudad_residencia || null,
       lenguas_maternas: data.lenguas_maternas || null,
       otros_idiomas: otrosIdiomas,
+      otros_idiomas_otro: idiomaOtroCual || null,
       estudia: asBool(data.estudia),
       que_estudias: data.que_estudias || null,
       trabaja: asBool(data.trabaja),
       cual_trabajo: data.cual_trabajo || null,
       nivel_educativo: data.nivel_educativo || null,
       anios_estudio_espanol: asInt(data.anios_estudio_espanol),
-      metodos_estudio: Array.isArray(data.metodos_estudio) ? data.metodos_estudio : [],
+      metodos_estudio: metodosEstudio,
+      metodos_estudio_otro: metodosEstudioOtro || null,
       metodos_ejemplos: data.metodos_ejemplos || null,
       nivel_espanol: data.nivel_espanol || null,
       familia_espana: asBool(data.familia_espana),

@@ -68,8 +68,9 @@ const totalGrab = grabaciones.length;
       <p class="mt-1 text-slate-500">
         Este estudio investiga cómo percibe el hispanismo marroquí (docentes y
         estudiantes) las distintas variedades del español europeo. Escucharás
-        varias grabaciones y compartirás tus impresiones. No hay respuestas
-        correctas ni incorrectas: solo nos interesa <strong>tu opinión</strong>.
+        varias grabaciones y compartirás tus impresiones de manera totalmente
+        anónima e imparcial. No hay respuestas correctas ni incorrectas: solo nos
+        interesa <strong>tu opinión</strong>.
       </p>
       <p class="mt-3 flex flex-wrap items-center gap-2 text-sm">
         <span class="rounded-full border border-brand-100 bg-brand-50 px-3 py-1 font-medium text-brand-700">
@@ -106,8 +107,8 @@ const totalGrab = grabaciones.length;
               Correo electrónico<span class="req">*</span>
             </label>
             <p class="field-help">
-              Solo se usa para evitar respuestas duplicadas. No se publicará ni se
-              asociará a tus respuestas en los resultados.
+              Se utilizará exclusivamente para evitar respuestas duplicadas: no se
+              publicará ni se asociará a tus respuestas en los resultados.
             </p>
             <input id="email" name="email" type="email" class="input" placeholder="tucorreo@ejemplo.com" required />
           </div>
@@ -155,7 +156,13 @@ const totalGrab = grabaciones.length;
                   <div class="chips">
                     {NIVELES_IDIOMA.map((nivel) => (
                       <label class="chip">
-                        <input type="radio" name={`idioma_${idioma}`} value={nivel} class="peer sr-only" />
+                        <input
+                          type="radio"
+                          name={`idioma_${idioma}`}
+                          value={nivel}
+                          class="peer sr-only"
+                          data-toggle-otro={idioma === 'Otro' ? 'idioma_otro_cual' : null}
+                        />
                         <span>{nivel}</span>
                       </label>
                     ))}
@@ -163,6 +170,15 @@ const totalGrab = grabaciones.length;
                 </div>
               ))}
             </div>
+            <!-- Se muestra al marcar cualquier nivel de la fila «Otro» -->
+            <input
+              id="idioma_otro_cual"
+              name="idioma_otro_cual"
+              type="text"
+              class="input mt-2 hidden"
+              placeholder="¿Qué otro idioma hablas?"
+              required
+            />
           </div>
 
           <div class="grid gap-5 sm:grid-cols-2">
@@ -214,11 +230,26 @@ const totalGrab = grabaciones.length;
             <div class="pills" data-required-group="metodos_estudio">
               {METODOS_ESTUDIO.map((m) => (
                 <label class="pill">
-                  <input type="checkbox" name="metodos_estudio" value={m} class="peer sr-only" />
+                  <input
+                    type="checkbox"
+                    name="metodos_estudio"
+                    value={m}
+                    class="peer sr-only"
+                    data-toggle-otro={m === 'Otro' ? 'metodos_estudio_otro' : null}
+                  />
                   <span>{m}</span>
                 </label>
               ))}
             </div>
+            <!-- Se muestra al marcar «Otro» -->
+            <input
+              id="metodos_estudio_otro"
+              name="metodos_estudio_otro"
+              type="text"
+              class="input mt-2 hidden"
+              placeholder="¿Qué otro método utilizas?"
+              required
+            />
           </div>
 
           <div class="field">
@@ -242,20 +273,11 @@ const totalGrab = grabaciones.length;
             </select>
           </div>
 
-          <div class="grid gap-5 sm:grid-cols-2">
-            <div class="field">
-              <h3 class="field-title">¿Tienes familia en España?<span class="req">*</span></h3>
-              <div class="pills">
-                <label class="pill"><input type="radio" name="familia_espana" value="si" required class="peer sr-only" /><span>Sí</span></label>
-                <label class="pill"><input type="radio" name="familia_espana" value="no" required class="peer sr-only" /><span>No</span></label>
-              </div>
-            </div>
-            <div class="field">
-              <h3 class="field-title">¿Has visitado España?<span class="req">*</span></h3>
-              <div class="pills">
-                <label class="pill"><input type="radio" name="visitado_espana" value="si" required class="peer sr-only" /><span>Sí</span></label>
-                <label class="pill"><input type="radio" name="visitado_espana" value="no" required class="peer sr-only" /><span>No</span></label>
-              </div>
+          <div class="field">
+            <h3 class="field-title">¿Tienes familia en España?<span class="req">*</span></h3>
+            <div class="pills">
+              <label class="pill"><input type="radio" name="familia_espana" value="si" required class="peer sr-only" /><span>Sí</span></label>
+              <label class="pill"><input type="radio" name="familia_espana" value="no" required class="peer sr-only" /><span>No</span></label>
             </div>
           </div>
 
@@ -266,12 +288,20 @@ const totalGrab = grabaciones.length;
             </div>
           </div>
 
+          <div class="field">
+            <h3 class="field-title">¿Has visitado España?<span class="req">*</span></h3>
+            <div class="pills">
+              <label class="pill"><input type="radio" name="visitado_espana" value="si" required class="peer sr-only" /><span>Sí</span></label>
+              <label class="pill"><input type="radio" name="visitado_espana" value="no" required class="peer sr-only" /><span>No</span></label>
+            </div>
+          </div>
+
           <div class="conditional hidden" data-show-when="visitado_espana" data-show-value="si">
-            <TablaFrecuencia name="visitado_espana_tiempo" />
             <div class="field">
               <label class="field-title" for="visitado_espana_zonas">Señala las zonas visitadas<span class="req">*</span></label>
               <input id="visitado_espana_zonas" name="visitado_espana_zonas" type="text" class="input" required />
             </div>
+            <TablaFrecuencia name="visitado_espana_tiempo" />
           </div>
 
           <div class="field">
@@ -413,8 +443,9 @@ const totalGrab = grabaciones.length;
       const seenRadios = new Set<string>();
 
       step.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>('[required]').forEach((el) => {
-        // Ignora los campos dentro de un bloque condicional que está oculto.
-        if (el.closest('.conditional.hidden')) return;
+        // Ignora los campos dentro de un bloque condicional que está oculto y
+        // los campos "Otro" que aún no se han desplegado.
+        if (el.closest('.conditional.hidden') || el.classList.contains('hidden')) return;
         if (el instanceof HTMLInputElement && el.type === 'radio') {
           if (seenRadios.has(el.name)) return;
           seenRadios.add(el.name);
@@ -520,17 +551,34 @@ const totalGrab = grabaciones.length;
       update();
     });
 
-    // Campo "Otro" del género
-    form.querySelectorAll<HTMLInputElement>('input[data-toggle-otro]').forEach((radio) => {
-      const targetId = radio.dataset.toggleOtro!;
-      const target = document.getElementById(targetId) as HTMLInputElement;
-      form.querySelectorAll<HTMLInputElement>(`input[name="${radio.name}"]`).forEach((r) => {
-        r.addEventListener('change', () => {
-          const show = radio.checked;
-          target.classList.toggle('hidden', !show);
-          if (!show) target.value = '';
-        });
+    // ── Campos "Otro" (género, idiomas, métodos de estudio) ───────────────
+    // Cada casilla de texto se muestra cuando está marcado alguno de sus
+    // disparadores: la opción «Otro» del género o de los métodos, o cualquiera
+    // de los niveles de la fila «Otro» de los idiomas.
+    const disparadoresOtro = new Map<string, HTMLInputElement[]>();
+    form.querySelectorAll<HTMLInputElement>('input[data-toggle-otro]').forEach((input) => {
+      const id = input.dataset.toggleOtro!;
+      disparadoresOtro.set(id, [...(disparadoresOtro.get(id) ?? []), input]);
+    });
+    disparadoresOtro.forEach((disparadores, targetId) => {
+      const target = document.getElementById(targetId) as HTMLInputElement | null;
+      if (!target) return;
+      const update = () => {
+        const show = disparadores.some((d) => d.checked);
+        target.classList.toggle('hidden', !show);
+        if (!show) {
+          target.value = '';
+          target.classList.remove('field-error');
+        }
+      };
+      // Basta con escuchar todos los inputs que comparten name con algún
+      // disparador (al desmarcar un radio del grupo no salta su propio change).
+      new Set(disparadores.map((d) => d.name)).forEach((name) => {
+        form.querySelectorAll<HTMLInputElement>(`input[name="${CSS.escape(name)}"]`).forEach((r) =>
+          r.addEventListener('change', update)
+        );
       });
+      update();
     });
 
     // ── Envío ────────────────────────────────────────────────────────────
