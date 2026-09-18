@@ -1,0 +1,12 @@
+{
+  "name": "guia-estadistica-word",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Generador del documento Word de la guía estadística (no forma parte de la app)",
+  "scripts": {
+    "build": "./compilar.sh"
+  },
+  "dependencies": {
+    "docx": "^9.7.1"
+  }
+}
