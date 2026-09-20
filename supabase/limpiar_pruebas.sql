@@ -32,8 +32,9 @@ order by created_at;
 
 
 -- ── PASO 1 · Borrar los datos de ejemplo del seed ──────────────────────────
--- Esto es lo que genera supabase/seed_prueba.sql: 20 participantes ficticios
--- y sus 120 valoraciones. Las respuestas reales NO se tocan.
+-- Esto es lo que generan supabase/seed_prueba.sql (20 participantes) y
+-- supabase/seed_200_participantes.sql (180 más): hasta 200 participantes
+-- ficticios y sus 1 200 valoraciones. Las respuestas reales NO se tocan.
 delete from public.participantes
 where email like 'prueba%@ejemplo.test';
 

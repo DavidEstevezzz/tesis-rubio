@@ -1,6 +1,14 @@
 import type { APIRoute } from 'astro';
 import { getServiceClient } from '@/lib/supabase';
 import { ESCALA_VOZ, ESCALA_PERSONA, ESCALA_CULTURA, GRABACIONES } from '@/lib/config';
+import {
+  indiceVoz,
+  indicePersona,
+  indiceCultura,
+  aciertaRegion,
+  tramoEdad,
+  grupoLenguaMaterna,
+} from '@/lib/cruces';
 
 export const prerender = false;
 
@@ -36,7 +44,10 @@ export const GET: APIRoute = async () => {
 
   const header = [
     ...pCols,
-    'grabacion', 'ciudad', 'zona',
+    // Columnas derivadas del participante: listas para usar como «variable de
+    // agrupación» en una tabla dinámica, SPSS o jamovi sin recodificar nada.
+    'tramo_edad', 'lengua_materna_grupo',
+    'grabacion', 'ciudad', 'zona', 'comunidad_real',
     ...vozCols,
     'aspecto_gustado', 'aspecto_disgustado', 'proximidad',
     'nivel_estudios', 'nivel_ingresos',
@@ -44,6 +55,10 @@ export const GET: APIRoute = async () => {
     'region_percibida', 'conoce_personas_region', 'conoce_personas_region_opinion',
     ...culturaCols,
     'trato_diferenciado', 'trato_mujer_diferente', 'actitud_genero_influye',
+    // Índices = media de los ítems de cada escala (1-5), y si el participante
+    // situó el habla en su comunidad real. Son las variables dependientes de
+    // los cruces del panel.
+    'indice_voz', 'indice_persona', 'indice_cultura', 'acierto_region',
     'fecha',
   ];
 
@@ -53,8 +68,9 @@ export const GET: APIRoute = async () => {
     const p = pById.get(v.participante_id) ?? {};
     const cells: any[] = [];
     for (const c of pCols) cells.push(fmtBool(p[c]));
+    cells.push(tramoEdad(p.edad) ?? '', grupoLenguaMaterna(p.lenguas_maternas) ?? '');
     const g = grabById.get(v.grabacion);
-    cells.push(v.grabacion, g?.ciudad ?? '', g?.zona ?? '');
+    cells.push(v.grabacion, g?.ciudad ?? '', g?.zona ?? '', g?.comunidad ?? '');
     for (const i of ESCALA_VOZ) cells.push((v.escala_voz ?? {})[i.id] ?? '');
     cells.push(v.aspecto_gustado, v.aspecto_disgustado, v.proximidad ?? '');
     cells.push(v.nivel_estudios ?? '', v.nivel_ingresos ?? '');
@@ -62,6 +78,12 @@ export const GET: APIRoute = async () => {
     cells.push(v.region_percibida ?? '', fmtBool(v.conoce_personas_region), v.conoce_personas_region_opinion ?? '');
     for (const i of ESCALA_CULTURA) cells.push((v.escala_cultura ?? {})[i.id] ?? '');
     cells.push(fmtBool(v.trato_diferenciado), fmtBool(v.trato_mujer_diferente), v.actitud_genero_influye ?? '');
+    cells.push(
+      indiceVoz(v) ?? '',
+      indicePersona(v) ?? '',
+      indiceCultura(v) ?? '',
+      fmtBool(aciertaRegion(v))
+    );
     cells.push(v.created_at);
     rows.push(cells.map(csvCell).join(','));
   }

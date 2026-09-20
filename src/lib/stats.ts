@@ -18,6 +18,7 @@ import {
   type ItemDiferencial,
   type Zona,
 } from './config';
+import { computeCruces } from './cruces';
 
 export type Participante = Record<string, any>;
 export type Valoracion = Record<string, any>;
@@ -304,6 +305,9 @@ export function computeStats(participantes: Participante[], valoraciones: Valora
     genero_preguntas,
     bloques,
     equilibrio,
+    // Cruces con las características del participante (nivel de español,
+    // edad, lengua materna, género, estancia en España…). Ver src/lib/cruces.ts.
+    cruces: computeCruces(participantes, valoraciones),
   };
 }
 
