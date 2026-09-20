@@ -702,9 +702,13 @@ const MEDIDAS_TABLA = [
     // Colores de voz / persona / cultura. A propósito lejos del naranja y el
     // azul, que en este panel significan siempre «sur» y «norte».
     const ESCALAS = ['#7c3aed', '#db2777', '#0d9488'];
-
-    const el = document.getElementById('stats-data');
-    if (el && el.textContent) init(JSON.parse(el.textContent));
+    // Las cuatro medidas que ofrece el selector de cada cruce.
+    const MEDIDAS = [
+      { id: 'voz', etiqueta: 'Índice de voz' },
+      { id: 'persona', etiqueta: 'Índice de persona' },
+      { id: 'cultura', etiqueta: 'Índice de cultura' },
+      { id: 'proximidad', etiqueta: 'Proximidad' },
+    ];
 
     function init(stats: any) {
       Chart.defaults.font.family = 'Inter, system-ui, sans-serif';
@@ -880,18 +884,22 @@ const MEDIDAS_TABLA = [
     }
 
     // ── Pestaña de cruces: perfil del participante × valoración ────────────
-    const MEDIDAS = [
-      { id: 'voz', etiqueta: 'Índice de voz' },
-      { id: 'persona', etiqueta: 'Índice de persona' },
-      { id: 'cultura', etiqueta: 'Índice de cultura' },
-      { id: 'proximidad', etiqueta: 'Proximidad' },
-    ];
-
     function pintarCruces(stats: any) {
       const panel = panelDe('cruces');
       const cr = stats.cruces;
 
-      cr.indices.forEach((c: any) => pintarCruce(panel, c));
+      // Cada tarjeta se pinta por su cuenta: si una fallara (datos raros en un
+      // grupo, por ejemplo), las demás siguen dibujándose en vez de quedarse
+      // toda la pestaña en blanco.
+      cr.indices.forEach((c: any) => {
+        try {
+          pintarCruce(panel, c);
+        } catch (e) {
+          console.error(`No se pudo pintar el cruce «${c.id}»`, e);
+          avisoGrafica(panel, `cruce-${c.id}`);
+          avisoGrafica(panel, `brecha-${c.id}`);
+        }
+      });
 
       // % de síes en las dos preguntas de género, según el género del participante.
       const g = cr.genero;
@@ -1189,6 +1197,16 @@ const MEDIDAS_TABLA = [
     }
 
     // ── Utilidades de dibujo ───────────────────────────────────────────────
+    /** Sustituye una gráfica que no se ha podido dibujar por un aviso visible. */
+    function avisoGrafica(panel: HTMLElement, nombre: string) {
+      const cv = panel.querySelector(`canvas[data-chart="${nombre}"]`);
+      const caja = cv?.parentElement;
+      if (!caja) return;
+      caja.innerHTML =
+        '<p class="aviso-grafica">No se ha podido dibujar esta gráfica. ' +
+        'Los números siguen estando en la tabla de abajo.</p>';
+    }
+
     function panelDe(nombre: string) {
       return document.querySelector<HTMLElement>(`.panel[data-panel="${nombre}"]`)!;
     }
@@ -1305,6 +1323,15 @@ const MEDIDAS_TABLA = [
       });
       return { labels, data };
     }
+
+    // ── Arranque ───────────────────────────────────────────────────────────
+    // Va al FINAL a propósito. Las funciones se elevan, pero las constantes
+    // de arriba (colores, MEDIDAS…) no existen hasta que el módulo termina de
+    // evaluarse. Arrancando aquí, cualquier pestaña puede pintar nada más
+    // cargar —incluida la de cruces cuando se entra por /admin#cruces, que es
+    // lo que ocurre al recargar la página estando en ella—.
+    const el = document.getElementById('stats-data');
+    if (el && el.textContent) init(JSON.parse(el.textContent));
   </script>
 
   <style>
@@ -1376,6 +1403,11 @@ const MEDIDAS_TABLA = [
       border-top: 2px solid #e2e8f0; background: #f8fafc; color: #1d3c8d;
     }
     .nota-tabla { margin-top: 0.5rem; font-size: 0.75rem; color: #94a3b8; }
+    .aviso-grafica {
+      display: flex; align-items: center; justify-content: center; height: 100%;
+      border-radius: 0.6rem; border: 1px dashed #fecaca; background: #fef2f2;
+      padding: 1rem; text-align: center; font-size: 0.85rem; color: #b91c1c;
+    }
     .tabla-cruce .col-oculta { display: none; }
     /* Recuento de participantes demasiado bajo para fiarse. */
     .n-poca { color: #dc2626; font-weight: 600; }
