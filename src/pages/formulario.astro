@@ -34,13 +34,20 @@ if (NUM_BLOQUES > 1) {
   } else {
     try {
       const supabase = getServiceClient();
-      // Nº de participantes ya completados en cada versión.
-      const { data } = await supabase.from('participantes').select('bloque');
-      const conteo = new Array(NUM_BLOQUES).fill(0);
-      for (const row of data ?? []) {
-        const b = Number(row.bloque);
-        if (b >= 1 && b <= NUM_BLOQUES) conteo[b - 1]++;
-      }
+      // Nº de participantes ya completados en cada versión. Se pide un
+      // RECUENTO por versión (`head: true` no transfiere ninguna fila) en vez
+      // de traerse la tabla: así el formulario carga igual de rápido con 20
+      // participantes que con 20 000, y nunca se topa con el límite de filas
+      // de la API de Supabase, que daría un recuento corto y un reparto malo.
+      const recuentos = await Promise.all(
+        Array.from({ length: NUM_BLOQUES }, (_, i) =>
+          supabase
+            .from('participantes')
+            .select('id', { count: 'exact', head: true })
+            .eq('bloque', i + 1)
+        )
+      );
+      const conteo = recuentos.map((r) => r.count ?? 0);
       // Versión(es) con el menor recuento; si hay empate, se elige al azar.
       const minN = Math.min(...conteo);
       const candidatas = conteo

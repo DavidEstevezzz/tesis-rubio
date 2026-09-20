@@ -1,19 +1,27 @@
 ---
 import Layout from '@/layouts/Layout.astro';
 import AdminNav from '@/components/AdminNav.astro';
-import { getServiceClient } from '@/lib/supabase';
+import { getServiceClient, seleccionarTodo } from '@/lib/supabase';
 import { computeStats } from '@/lib/stats';
 import { interpretaR } from '@/lib/cruces';
 
 const user = Astro.locals.user;
 const supabase = getServiceClient();
 
-const [{ data: participantes }, { data: valoraciones }] = await Promise.all([
-  supabase.from('participantes').select('*'),
-  supabase.from('valoraciones').select('*'),
+// `seleccionarTodo` lee la tabla ENTERA por tandas. Un `select('*')` normal
+// se quedaría en las primeras 1 000 filas (el tope de la API de Supabase) y,
+// con 200 participantes = 1 200 valoraciones, las gráficas saldrían
+// calculadas sobre parte de los datos sin avisar de nada.
+const [participantes, valoraciones] = await Promise.all([
+  seleccionarTodo((desde, hasta) =>
+    supabase.from('participantes').select('*').order('id').range(desde, hasta)
+  ),
+  seleccionarTodo((desde, hasta) =>
+    supabase.from('valoraciones').select('*').order('id').range(desde, hasta)
+  ),
 ]);
 
-const stats = computeStats(participantes ?? [], valoraciones ?? []);
+const stats = computeStats(participantes, valoraciones);
 const hayDatos = stats.resumen.totalParticipantes > 0;
 
 // Formato de las tablas de cruces: los huecos se muestran como «—» y las

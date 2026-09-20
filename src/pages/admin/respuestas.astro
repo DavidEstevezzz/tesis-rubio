@@ -1,15 +1,22 @@
 ---
 import Layout from '@/layouts/Layout.astro';
 import AdminNav from '@/components/AdminNav.astro';
-import { getServiceClient } from '@/lib/supabase';
+import { getServiceClient, seleccionarTodo } from '@/lib/supabase';
 
 const user = Astro.locals.user;
 const supabase = getServiceClient();
 
-const { data: participantes } = await supabase
-  .from('participantes')
-  .select('*')
-  .order('created_at', { ascending: false });
+// Por tandas, para que el listado no se corte en 1 000 participantes.
+// El `id` desempata: si dos se registran en el mismo instante, sin él la
+// misma fila podría salir en dos tandas y otra no salir en ninguna.
+const participantes = await seleccionarTodo((desde, hasta) =>
+  supabase
+    .from('participantes')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .order('id')
+    .range(desde, hasta)
+);
 
 const fmt = (b: boolean | null) => (b === true ? 'Sí' : b === false ? 'No' : '—');
 ---
