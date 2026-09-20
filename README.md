@@ -205,11 +205,30 @@ Dos conceptos para leer las tablas:
   las hablas septentrionales, **negativo** = las meridionales. En el panel sale
   en azul o en naranja según hacia dónde se incline.
 
-Cada tarjeta trae un selector (voz / persona / cultura / proximidad), una
-gráfica con las dos zonas y la brecha, y la tabla completa con las cuatro
-medidas y la *n* de cada grupo. Para la correlación se muestran el coeficiente
-de Pearson, la media del índice en cada nivel de proximidad, la nube de puntos
-y el *r* dentro de cada grabación.
+El panel está escrito para leerse **sin saber estadística**, porque lo usa
+gente de Filología. Cada tarjeta trae:
+
+- **Qué se calcula**: de dónde sale exactamente el número, en castellano llano.
+- **Cómo leerlo**: qué conclusión sacar según lo que se vea (si las barras
+  suben, si la brecha es plana, si alguna baja de cero…).
+- **Ojo**: las trampas de ese cruce concreto — grupos pequeños, variables que
+  van mezcladas, respuestas que no son personas.
+- Un selector de medida (voz / persona / cultura / proximidad) que cambia a la
+  vez la gráfica y las columnas de la tabla.
+- **Dos gráficas**: arriba la nota de cada zona, con una línea discontinua en el
+  3 (el punto medio de la escala); debajo, la brecha en su propia gráfica con el
+  cero marcado. La brecha estuvo al principio como una línea dentro de la
+  primera gráfica, colgada de un segundo eje a la derecha: el número era
+  correcto pero se leía mal, porque la vista la comparaba con la escala 1-5 de
+  la izquierda.
+
+Arriba del todo hay un glosario fijo con los cuatro términos que hacen falta
+(índice, proximidad, brecha y las dos columnas de recuentos) y un aviso de que
+el panel describe, pero no contrasta.
+
+Para la correlación se muestran el coeficiente, la nota media en cada nivel de
+proximidad, la nube de puntos y la fuerza de la relación dentro de cada
+grabación. Los recuentos de participantes por debajo de 15 salen en rojo.
 
 Notas de método:
 

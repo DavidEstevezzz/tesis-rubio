@@ -290,33 +290,78 @@ const MEDIDAS_TABLA = [
               </section>
 
               <section class="panel hidden" data-panel="cruces" role="tabpanel">
-                <p class="panel-intro">
-                  Aquí se cruza <strong>lo que valora cada persona</strong> con <strong>quién es esa
-                  persona</strong> (nivel de español, edad, lengua materna, estancias en España…).
-                  El «índice» de una escala es la media de todos sus adjetivos (1-5), y la
-                  <strong>brecha</strong> es la resta
-                  <span class="chip chip-sep">septentrional</span> −
-                  <span class="chip chip-mer">meridional</span>: cuanto más lejos de 0, más
-                  diferencia hace ese grupo entre las dos zonas dialectales.
-                </p>
+                <div class="card glosario">
+                  <h2 class="card-title">Antes de mirar las gráficas: qué significa cada cosa</h2>
+                  <p class="card-sub">
+                    Esta pestaña cruza <strong>lo que valora cada persona</strong> con
+                    <strong>quién es esa persona</strong>. Todo lo demás del panel mira las
+                    grabaciones; esto mira a los informantes.
+                  </p>
+                  <dl class="mt-4 grid gap-3 sm:grid-cols-2">
+                    {stats.cruces.glosario.map((g) => (
+                      <div class="glosario-item">
+                        <dt>{g.termino}</dt>
+                        <dd>{g.texto}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                  <p class="glosario-aviso">
+                    ⚠️ Este panel <strong>describe</strong> lo que hay: medias, diferencias y
+                    porcentajes. No dice si una diferencia es «estadísticamente significativa»,
+                    es decir, si es lo bastante sólida como para afirmarla en la tesis. Para eso
+                    hace falta el CSV y un programa de estadística.
+                  </p>
+                </div>
 
                 <div class="grid min-w-0 gap-6">
                   {stats.cruces.indices.map((c) => (
                     <div class="card min-w-0">
                       <h2 class="card-title">{c.pregunta}</h2>
-                      <p class="card-sub">{c.ayuda}</p>
 
-                      <label class="mt-3 block text-sm font-medium text-slate-600">
-                        Medida
+                      <div class="explica">
+                        <p class="explica-linea">
+                          <span class="explica-et">Qué se calcula</span>
+                          {c.queSeCalcula}
+                        </p>
+                        <div class="explica-linea">
+                          <span class="explica-et">Cómo leerlo</span>
+                          <ul class="explica-lista">
+                            {c.comoLeerlo.map((linea) => (
+                              <li>{linea}</li>
+                            ))}
+                          </ul>
+                        </div>
+                        <p class="explica-linea explica-ojo">
+                          <span class="explica-et explica-et-ojo">Ojo</span>
+                          {c.ojo}
+                        </p>
+                      </div>
+
+                      <label class="mt-4 block text-sm font-medium text-slate-600">
+                        Qué medida quieres ver
                         <select
                           data-medida={c.id}
                           class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm sm:max-w-xs"
                         ></select>
                       </label>
-                      <div class="chart-box chart-tall"><canvas data-chart={`cruce-${c.id}`}></canvas></div>
 
-                      <div class="mt-4 overflow-x-auto">
-                        <table class="tabla-cruce">
+                      <p class="titulo-grafica">
+                        1 · La nota media de cada grupo, por zona
+                      </p>
+                      <div class="chart-box"><canvas data-chart={`cruce-${c.id}`}></canvas></div>
+
+                      <p class="titulo-grafica">
+                        2 · La brecha: cuánto más alto puntúa cada grupo al norte que al sur
+                      </p>
+                      <p class="subtitulo-grafica">
+                        Es la resta de las dos barras de arriba. Por encima de cero, ese grupo
+                        prefiere las hablas del norte; por debajo, las del sur; pegada a cero,
+                        las trata igual.
+                      </p>
+                      <div class="chart-box chart-corta"><canvas data-chart={`brecha-${c.id}`}></canvas></div>
+
+                      <div class="mt-5 overflow-x-auto">
+                        <table class="tabla-cruce" data-tabla={c.id}>
                           <thead>
                             <tr>
                               <th class="text-left">{c.variable}</th>
@@ -324,9 +369,9 @@ const MEDIDAS_TABLA = [
                               <th class="text-right">Valor.</th>
                               {MEDIDAS_TABLA.map((m) => (
                                 <Fragment>
-                                  <th class="text-right">{m.etiqueta} mer.</th>
-                                  <th class="text-right">{m.etiqueta} sep.</th>
-                                  <th class="text-right">Δ</th>
+                                  <th class={`m-${m.id} text-right`}>{m.etiqueta} · sur</th>
+                                  <th class={`m-${m.id} text-right`}>{m.etiqueta} · norte</th>
+                                  <th class={`m-${m.id} text-right`}>{m.etiqueta} · brecha</th>
                                 </Fragment>
                               ))}
                             </tr>
@@ -335,13 +380,15 @@ const MEDIDAS_TABLA = [
                             {c.filas.map((f) => (
                               <tr>
                                 <td class="font-semibold text-brand-700">{f.grupo}</td>
-                                <td class="text-right text-slate-500">{f.nParticipantes}</td>
+                                <td class={`text-right ${f.nParticipantes < 15 ? 'n-poca' : 'text-slate-500'}`}>
+                                  {f.nParticipantes}
+                                </td>
                                 <td class="text-right text-slate-500">{f.total.n}</td>
                                 {MEDIDAS_TABLA.map((m) => (
                                   <Fragment>
-                                    <td class="text-right">{num(f.meridional[m.id])}</td>
-                                    <td class="text-right">{num(f.septentrional[m.id])}</td>
-                                    <td class={`text-right font-semibold ${claseDelta(f.brecha[m.id])}`}>
+                                    <td class={`m-${m.id} text-right`}>{num(f.meridional[m.id])}</td>
+                                    <td class={`m-${m.id} text-right`}>{num(f.septentrional[m.id])}</td>
+                                    <td class={`m-${m.id} text-right font-semibold ${claseDelta(f.brecha[m.id])}`}>
                                       {delta(f.brecha[m.id])}
                                     </td>
                                   </Fragment>
@@ -352,15 +399,36 @@ const MEDIDAS_TABLA = [
                         </table>
                       </div>
                       <p class="nota-tabla">
-                        mer. = media en las grabaciones meridionales · sep. = en las septentrionales ·
-                        Δ = sep. − mer. (azul: prefiere la septentrional; naranja: la meridional).
+                        La tabla muestra la medida elegida arriba. «Sur» son las grabaciones
+                        meridionales y «norte» las septentrionales. Los recuentos de
+                        participantes <span class="n-poca">en rojo</span> son grupos de menos de
+                        15 personas: léelos con prudencia.
                       </p>
                     </div>
                   ))}
 
                   <div class="card min-w-0">
                     <h2 class="card-title">{stats.cruces.genero.pregunta}</h2>
-                    <p class="card-sub">{stats.cruces.genero.ayuda}</p>
+
+                    <div class="explica">
+                      <p class="explica-linea">
+                        <span class="explica-et">Qué se calcula</span>
+                        {stats.cruces.genero.queSeCalcula}
+                      </p>
+                      <div class="explica-linea">
+                        <span class="explica-et">Cómo leerlo</span>
+                        <ul class="explica-lista">
+                          {stats.cruces.genero.comoLeerlo.map((linea) => (
+                            <li>{linea}</li>
+                          ))}
+                        </ul>
+                      </div>
+                      <p class="explica-linea explica-ojo">
+                        <span class="explica-et explica-et-ojo">Ojo</span>
+                        {stats.cruces.genero.ojo}
+                      </p>
+                    </div>
+
                     <div class="chart-box"><canvas data-chart="cruceGenero"></canvas></div>
                     <div class="mt-4 overflow-x-auto">
                       <table class="tabla-cruce">
@@ -379,7 +447,9 @@ const MEDIDAS_TABLA = [
                           {stats.cruces.genero.filas.map((f) => (
                             <tr>
                               <td class="font-semibold text-brand-700">{f.grupo}</td>
-                              <td class="text-right text-slate-500">{f.nParticipantes}</td>
+                              <td class={`text-right ${f.nParticipantes < 15 ? 'n-poca' : 'text-slate-500'}`}>
+                                {f.nParticipantes}
+                              </td>
                               <td class="text-right text-slate-500">{f.nValoraciones}</td>
                               <td class="text-right">{f.tratoDiferenciado.si} / {f.tratoDiferenciado.n}</td>
                               <td class="text-right font-semibold text-brand-700">{pct(f.tratoDiferenciado.pct)}</td>
@@ -403,44 +473,78 @@ const MEDIDAS_TABLA = [
                         </tbody>
                       </table>
                     </div>
+                    <p class="nota-tabla">
+                      «Trato diferenciado · sí» son las respuestas afirmativas sobre el total de
+                      respuestas a esa pregunta (quien la dejó en blanco no cuenta).
+                    </p>
                   </div>
 
                   <div class="card min-w-0">
                     <h2 class="card-title">{stats.cruces.correlacion.pregunta}</h2>
-                    <p class="card-sub">{stats.cruces.correlacion.ayuda}</p>
 
-                    <div class="mt-4 grid gap-3 grid-cols-2 lg:grid-cols-4">
+                    <div class="explica">
+                      <p class="explica-linea">
+                        <span class="explica-et">Qué se calcula</span>
+                        {stats.cruces.correlacion.queSeCalcula}
+                      </p>
+                      <div class="explica-linea">
+                        <span class="explica-et">Cómo leerlo</span>
+                        <ul class="explica-lista">
+                          {stats.cruces.correlacion.comoLeerlo.map((linea) => (
+                            <li>{linea}</li>
+                          ))}
+                        </ul>
+                      </div>
+                      <p class="explica-linea explica-ojo">
+                        <span class="explica-et explica-et-ojo">Ojo</span>
+                        {stats.cruces.correlacion.ojo}
+                      </p>
+                    </div>
+
+                    <div class="mt-4 grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
                       {stats.cruces.correlacion.globales.map((c) => (
                         <div class="kpi kpi-sm">
                           <span class="kpi-val">{c.r === null ? '—' : c.r}</span>
-                          <span class="kpi-label">{c.etiqueta} · r (n = {c.n})</span>
+                          <span class="kpi-label">
+                            {c.etiqueta}
+                            <span class="block text-xs text-slate-400">
+                              {interpretaR(c.r)} · {c.n} valoraciones
+                            </span>
+                          </span>
                         </div>
                       ))}
-                      <div class="kpi kpi-sm">
-                        <span class="kpi-val text-base leading-snug">
-                          {interpretaR(stats.cruces.correlacion.globales[0]?.r ?? null)}
+                      <div class="kpi kpi-sm kpi-nota">
+                        <span class="kpi-label">
+                          Recuerda: <strong>0</strong> = no tienen nada que ver ·
+                          <strong> 1</strong> = suben del todo a la vez ·
+                          <strong> −1</strong> = una sube cuando la otra baja.
                         </span>
-                        <span class="kpi-label">Lectura del r de la voz</span>
                       </div>
                     </div>
 
                     <div class="mt-6 grid gap-6 lg:grid-cols-2">
                       <div>
-                        <p class="card-sub text-center">
-                          Media del índice de voz en cada nivel de proximidad declarado.
+                        <p class="titulo-grafica mt-0">
+                          1 · La nota media según lo cercana que suene
+                        </p>
+                        <p class="subtitulo-grafica">
+                          Si las barras suben hacia la derecha, la respuesta a la pregunta es que sí.
                         </p>
                         <div class="chart-box"><canvas data-chart="vozPorProximidad"></canvas></div>
                       </div>
                       <div>
-                        <p class="card-sub text-center">
-                          Una valoración = un punto (con un pequeño desplazamiento horizontal para
-                          que no se solapen).
+                        <p class="titulo-grafica mt-0">2 · Los datos en bruto</p>
+                        <p class="subtitulo-grafica">
+                          Cada punto es una valoración. Los puntos se han separado un poco a los
+                          lados para que no se apilen unos encima de otros.
                         </p>
                         <div class="chart-box"><canvas data-chart="nubeProximidad"></canvas></div>
                       </div>
                       <div class="lg:col-span-2">
-                        <p class="card-sub text-center">
-                          Correlación voz × proximidad dentro de cada grabación.
+                        <p class="titulo-grafica">3 · En qué grabaciones la relación es más fuerte</p>
+                        <p class="subtitulo-grafica">
+                          Cuanto más alta la barra, más claro es en esa grabación que sentirla
+                          cercana va acompañado de valorarla mejor.
                         </p>
                         <div class="chart-box"><canvas data-chart="correlacionCiudad"></canvas></div>
                       </div>
@@ -451,8 +555,8 @@ const MEDIDAS_TABLA = [
                         <thead>
                           <tr>
                             <th class="text-left">Cruce</th>
-                            <th class="text-right">r de Pearson</th>
-                            <th class="text-right">n</th>
+                            <th class="text-right">Relación (−1 a 1)</th>
+                            <th class="text-right">Valoraciones</th>
                             <th class="text-left">Lectura</th>
                           </tr>
                         </thead>
@@ -595,6 +699,9 @@ const MEDIDAS_TABLA = [
     const PALETTE = ['#1f66f0', '#ff7a2f', '#22c55e', '#a855f7', '#eab308', '#06b6d4', '#ef4444', '#64748b'];
     // Meridional / septentrional: mismo código de color en todas las gráficas.
     const COLOR_ZONA = { meridional: ACCENT, septentrional: BRAND } as Record<string, string>;
+    // Colores de voz / persona / cultura. A propósito lejos del naranja y el
+    // azul, que en este panel significan siempre «sur» y «norte».
+    const ESCALAS = ['#7c3aed', '#db2777', '#0d9488'];
 
     const el = document.getElementById('stats-data');
     if (el && el.textContent) init(JSON.parse(el.textContent));
@@ -829,18 +936,23 @@ const MEDIDAS_TABLA = [
         data: {
           labels: vp.map((x: any) => `Proximidad ${x.proximidad}`),
           datasets: [
-            { label: 'Voz', data: vp.map((x: any) => x.voz), backgroundColor: PALETTE[0], borderRadius: 5 },
-            { label: 'Persona', data: vp.map((x: any) => x.persona), backgroundColor: PALETTE[1], borderRadius: 5 },
-            { label: 'Cultura', data: vp.map((x: any) => x.cultura), backgroundColor: PALETTE[2], borderRadius: 5 },
+            { label: 'Voz', data: vp.map((x: any) => x.voz), backgroundColor: ESCALAS[0], borderRadius: 5 },
+            { label: 'Persona', data: vp.map((x: any) => x.persona), backgroundColor: ESCALAS[1], borderRadius: 5 },
+            { label: 'Cultura', data: vp.map((x: any) => x.cultura), backgroundColor: ESCALAS[2], borderRadius: 5 },
           ],
         },
         options: {
           responsive: true, maintainAspectRatio: false,
           plugins: {
             legend: { position: 'bottom' },
-            tooltip: { callbacks: { afterLabel: (i: any) => `n = ${vp[i.dataIndex].n}` } },
+            tooltip: {
+              callbacks: {
+                title: (i: any) => `${i[0].label} sobre 5 de cercanía`,
+                afterLabel: (i: any) => `${vp[i.dataIndex].n} valoraciones`,
+              },
+            },
           },
-          scales: { y: escala15() },
+          scales: { y: { ...escala15(), title: { display: true, text: 'Nota media (1-5)' } } },
         },
       });
 
@@ -869,8 +981,16 @@ const MEDIDAS_TABLA = [
             },
           },
           scales: {
-            x: { min: 0.5, max: 5.5, title: { display: true, text: 'Proximidad declarada (1-5)' }, ticks: { stepSize: 1 } },
-            y: { ...escala15(), title: { display: true, text: 'Índice de voz (1-5)' } },
+            x: {
+              min: 0.5, max: 5.5,
+              title: { display: true, text: 'Cuánto se parece a mi pronunciación (1-5)' },
+              // Sin esto las marcas caen en 0,5 · 1,5 · 2,5… porque el eje
+              // empieza en medio punto para dejar sitio al desplazamiento.
+              afterBuildTicks: (eje: any) => {
+                eje.ticks = [1, 2, 3, 4, 5].map((value) => ({ value }));
+              },
+            },
+            y: { ...escala15(), title: { display: true, text: 'Nota de la voz (1-5)' } },
           },
         },
       });
@@ -899,13 +1019,21 @@ const MEDIDAS_TABLA = [
     }
 
     /**
-     * Una tarjeta de cruce: barras meridional/septentrional por grupo y, en el
-     * eje derecho, la brecha entre ambas (la medida de «discriminación»).
+     * Una tarjeta de cruce. Son DOS gráficas apiladas, a propósito:
+     *   1) las notas de cada zona (escala 1-5, la que entiende cualquiera);
+     *   2) la brecha entre ambas, con el cero como referencia.
+     *
+     * Antes la brecha era una línea dentro de la primera gráfica, colgada de
+     * un segundo eje a la derecha. El número era correcto, pero se leía mal:
+     * la vista la compara con la escala 1-5 de la izquierda, que no es la
+     * suya. Con su propia gráfica se ve lo que de verdad importa (si está por
+     * encima o por debajo de cero, y cuánto).
      */
     function pintarCruce(panel: HTMLElement, c: any) {
       const select = panel.querySelector<HTMLSelectElement>(`select[data-medida="${c.id}"]`);
       const cv = canvas(panel, `cruce-${c.id}`);
-      if (!select || !cv) return;
+      const cvBrecha = canvas(panel, `brecha-${c.id}`);
+      if (!select || !cv || !cvBrecha) return;
 
       MEDIDAS.forEach((m, i) => {
         const opt = document.createElement('option');
@@ -914,27 +1042,31 @@ const MEDIDAS_TABLA = [
         select.appendChild(opt);
       });
 
+      const etiquetas = c.filas.map((f: any) => f.grupo);
       const serie = (zona: 'meridional' | 'septentrional', medida: string) =>
         c.filas.map((f: any) => f[zona][medida]);
       const brechas = (medida: string) => c.filas.map((f: any) => f.brecha[medida]);
+      const pie = (i: any) =>
+        `${c.filas[i.dataIndex].total.n} valoraciones · ${c.filas[i.dataIndex].nParticipantes} participantes`;
 
+      // Gráfica 1: las dos zonas, más una línea de puntos en el 3 (el punto
+      // medio de la escala) para saber si una nota es buena o mala de un vistazo.
       const chart = new Chart(cv, {
         type: 'bar',
         data: {
-          labels: c.filas.map((f: any) => f.grupo),
+          labels: etiquetas,
           datasets: [
-            { label: 'Meridional', data: serie('meridional', 'voz'), backgroundColor: ACCENT, borderRadius: 5, order: 2 },
-            { label: 'Septentrional', data: serie('septentrional', 'voz'), backgroundColor: BRAND, borderRadius: 5, order: 2 },
+            { label: 'Sur · meridional', data: serie('meridional', 'voz'), backgroundColor: ACCENT, borderRadius: 5 },
+            { label: 'Norte · septentrional', data: serie('septentrional', 'voz'), backgroundColor: BRAND, borderRadius: 5 },
             {
-              label: 'Brecha (sep. − mer.)',
+              label: 'Punto medio de la escala (3)',
               type: 'line',
-              data: brechas('voz'),
-              borderColor: '#7c3aed',
-              backgroundColor: '#7c3aed',
-              borderWidth: 2,
-              tension: 0.25,
-              yAxisID: 'y1',
-              order: 1,
+              data: etiquetas.map(() => 3),
+              borderColor: '#94a3b8',
+              borderWidth: 1.5,
+              borderDash: [5, 4],
+              pointRadius: 0,
+              fill: false,
             },
           ],
         },
@@ -942,33 +1074,80 @@ const MEDIDAS_TABLA = [
           responsive: true, maintainAspectRatio: false,
           plugins: {
             legend: { position: 'bottom' },
+            tooltip: { filter: (i: any) => i.datasetIndex < 2, callbacks: { afterLabel: pie } },
+          },
+          scales: { y: { ...escala15(), title: { display: true, text: 'Nota media (1-5)' } } },
+        },
+      });
+
+      // Gráfica 2: la brecha. Barras desde cero, con el color de la zona
+      // favorecida, para que el signo se lea sin tener que mirar el número.
+      const colorBrecha = (v: number | null) => (v === null ? GRIS : v >= 0 ? BRAND : ACCENT);
+      const chartBrecha = new Chart(cvBrecha, {
+        type: 'bar',
+        data: {
+          labels: etiquetas,
+          datasets: [{
+            label: 'Brecha (norte − sur)',
+            data: brechas('voz'),
+            backgroundColor: brechas('voz').map(colorBrecha),
+            borderRadius: 4,
+          }],
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
             tooltip: {
               callbacks: {
-                afterLabel: (i: any) =>
-                  `n = ${c.filas[i.dataIndex].total.n} valoraciones · ${c.filas[i.dataIndex].nParticipantes} participantes`,
+                label: (i: any) => {
+                  const v = i.raw as number | null;
+                  if (v === null) return 'sin datos';
+                  if (Math.abs(v) < 0.05) return `${v.toFixed(2)} · trata igual a las dos zonas`;
+                  const zona = v > 0 ? 'al norte' : 'al sur';
+                  return `${v > 0 ? '+' : ''}${v.toFixed(2)} · puntúa mejor ${zona}`;
+                },
+                afterLabel: pie,
               },
             },
           },
           scales: {
-            y: { ...escala15(), title: { display: true, text: 'Media (1-5)' } },
-            y1: {
-              position: 'right',
+            y: {
               suggestedMin: -0.6,
               suggestedMax: 0.6,
-              grid: { drawOnChartArea: false },
-              title: { display: true, text: 'Brecha' },
+              grid: { color: (ctx: any) => (ctx.tick.value === 0 ? '#475569' : 'rgba(0,0,0,0.05)') },
+              title: { display: true, text: 'Diferencia de nota' },
             },
           },
         },
       });
 
-      select.addEventListener('change', () => {
-        const m = MEDIDAS[Number(select.value)];
+      // La tabla tiene las cuatro medidas, pero enseña solo la elegida: con
+      // quince columnas a la vez no se lee nada.
+      const tabla = panel.querySelector<HTMLTableElement>(`table[data-tabla="${c.id}"]`);
+      function mostrarMedida(id: string) {
+        if (!tabla) return;
+        MEDIDAS.forEach((m) => {
+          tabla.querySelectorAll<HTMLElement>(`.m-${m.id}`).forEach((celda) => {
+            celda.classList.toggle('col-oculta', m.id !== id);
+          });
+        });
+      }
+
+      function aplicar(indice: number) {
+        const m = MEDIDAS[indice] ?? MEDIDAS[0];
         chart.data.datasets[0].data = serie('meridional', m.id);
         chart.data.datasets[1].data = serie('septentrional', m.id);
-        chart.data.datasets[2].data = brechas(m.id);
         chart.update();
-      });
+        const b = brechas(m.id);
+        chartBrecha.data.datasets[0].data = b;
+        (chartBrecha.data.datasets[0] as any).backgroundColor = b.map(colorBrecha);
+        chartBrecha.update();
+        mostrarMedida(m.id);
+      }
+
+      aplicar(0);
+      select.addEventListener('change', () => aplicar(Number(select.value)));
     }
 
     // ── Pestaña de una ciudad ──────────────────────────────────────────────
@@ -1197,5 +1376,45 @@ const MEDIDAS_TABLA = [
       border-top: 2px solid #e2e8f0; background: #f8fafc; color: #1d3c8d;
     }
     .nota-tabla { margin-top: 0.5rem; font-size: 0.75rem; color: #94a3b8; }
+    .tabla-cruce .col-oculta { display: none; }
+    /* Recuento de participantes demasiado bajo para fiarse. */
+    .n-poca { color: #dc2626; font-weight: 600; }
+
+    /* Glosario de la pestaña de cruces. */
+    .glosario { border-color: #ddd6fe; background: #faf5ff; }
+    .glosario-item dt { font-weight: 700; color: #6d28d9; font-size: 0.85rem; }
+    .glosario-item dd { margin: 0.1rem 0 0; font-size: 0.85rem; color: #475569; line-height: 1.45; }
+    .glosario-aviso {
+      margin-top: 1rem; border-radius: 0.6rem; background: #fff;
+      border: 1px solid #e9d5ff; padding: 0.6rem 0.8rem;
+      font-size: 0.8rem; color: #6b21a8; line-height: 1.5;
+    }
+
+    /* Bloque «qué se calcula / cómo leerlo / ojo» de cada tarjeta. */
+    .explica {
+      margin-top: 0.75rem; border-left: 3px solid #bfdbfe; background: #f8fafc;
+      border-radius: 0 0.6rem 0.6rem 0; padding: 0.75rem 0.9rem;
+      display: flex; flex-direction: column; gap: 0.6rem;
+    }
+    .explica-linea { font-size: 0.85rem; color: #475569; line-height: 1.5; margin: 0; }
+    .explica-et {
+      display: inline-block; margin-right: 0.45rem; border-radius: 9999px;
+      background: #dbeafe; color: #1d4ed8; padding: 0.05rem 0.5rem;
+      font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.02em; vertical-align: 1px;
+    }
+    .explica-et-ojo { background: #fef3c7; color: #b45309; }
+    .explica-ojo { color: #78350f; }
+    .explica-lista { margin: 0.35rem 0 0 1.1rem; padding: 0; list-style: disc; }
+    .explica-lista li { margin-bottom: 0.25rem; }
+
+    /* Títulos de cada gráfica dentro de una tarjeta. */
+    .titulo-grafica {
+      margin: 1.25rem 0 0; font-size: 0.85rem; font-weight: 700; color: #334155;
+    }
+    .subtitulo-grafica { margin: 0.15rem 0 0; font-size: 0.78rem; color: #94a3b8; line-height: 1.45; }
+    .chart-corta { height: 200px; }
+    .kpi-nota { justify-content: center; background: #f8fafc; border-style: dashed; }
+    .kpi-nota .kpi-label { line-height: 1.5; }
   </style>
 </Layout>
