@@ -167,8 +167,16 @@ export type Cruce = {
   pregunta: string;
   /** Nombre de la variable que va en el eje X. */
   variable: string;
-  /** Cómo leer la tabla (aparece bajo el título en el panel). */
-  ayuda: string;
+  /**
+   * Qué número hay exactamente detrás de la gráfica. El panel lo usan
+   * filólogos, no estadísticos: se explica en castellano llano, sin dar por
+   * sabido ningún término técnico.
+   */
+  queSeCalcula: string;
+  /** Qué conclusión sacar según lo que se vea. Una viñeta por caso. */
+  comoLeerlo: string[];
+  /** Trampas concretas de ESTE cruce (grupos pequeños, sesgos, etc.). */
+  ojo: string;
   filas: FilaCruce[];
 };
 
@@ -289,34 +297,79 @@ export function computeCruces(participantes: Participante[], valoraciones: Valor
       id: 'nivelEspanol',
       pregunta: '¿Quien tiene más nivel de español discrimina más entre acentos?',
       variable: 'Nivel de español',
-      ayuda:
-        'Si la brecha crece al subir de A1 a Nativo, más competencia = más capacidad (o más ganas) ' +
-        'de diferenciar entre hablas meridionales y septentrionales.',
+      queSeCalcula:
+        'Se agrupa a los participantes por el nivel de español que declararon (A1, A2, B1…) y, ' +
+        'dentro de cada nivel, se calcula la nota media que ponen a las grabaciones del sur y la ' +
+        'que ponen a las del norte.',
+      comoLeerlo: [
+        'Mira sobre todo la gráfica de la brecha: si las barras van creciendo de A1 hacia Nativo, ' +
+          'la respuesta es que sí, cuanto más español se sabe más diferencia se hace entre las dos zonas.',
+        'Si la brecha se mantiene plana, el nivel de español no cambia la actitud: todos los ' +
+          'niveles diferencian más o menos lo mismo.',
+        'Si alguna barra baja por debajo de cero, ese grupo puntúa mejor las hablas del sur que ' +
+          'las del norte.',
+      ],
+      ojo:
+        'Los niveles bajos (A1, A2) suelen reunir muy pocos participantes, así que sus barras se ' +
+        'mueven mucho con poca cosa. Mira siempre antes la columna «Particip.» de la tabla.',
       filas: agrupar(valoraciones, participanteDe, (_v, p) => p?.nivel_espanol ?? null, NIVELES_ESPANOL),
     },
     {
       id: 'visitadoEspana',
       pregunta: '¿Haber estado en España cambia la actitud?',
       variable: '¿Ha visitado España?',
-      ayuda:
-        'Compara a quien ha pisado España con quien no. El contacto directo suele suavizar la ' +
-        'brecha entre zonas (menos estereotipo, más experiencia).',
+      queSeCalcula:
+        'Se separa a quienes dijeron haber estado en España de quienes no, y se compara la nota ' +
+        'media que pone cada grupo a cada zona.',
+      comoLeerlo: [
+        'Lo interesante está en las barras naranjas, las grabaciones del sur: si quien ha estado ' +
+          'en España se las puntúa más alto, el contacto directo mejora la actitud hacia esas hablas.',
+        'Si además la brecha del grupo «Sí» es menor que la del «No», la experiencia está ' +
+          'suavizando la diferencia entre zonas.',
+        'Si los dos grupos se parecen, haber viajado a España no está cambiando nada.',
+      ],
+      ojo:
+        'Quien ha viajado a España suele tener también más nivel de español, así que las dos cosas ' +
+        'van de la mano. Este cruce no puede separar un efecto del otro.',
       filas: agrupar(valoraciones, participanteDe, (_v, p) => boolATexto(p?.visitado_espana), siNo),
     },
     {
       id: 'edad',
       pregunta: '¿Los mayores tienen prejuicios más marcados?',
       variable: 'Tramo de edad',
-      ayuda: 'Una brecha que crece con la edad apunta a actitudes más marcadas en los tramos altos.',
+      queSeCalcula:
+        'Se reparte a los participantes en tramos de edad y se compara, dentro de cada tramo, la ' +
+        'nota que ponen a las hablas del sur y a las del norte.',
+      comoLeerlo: [
+        'Si la brecha crece de los tramos jóvenes a los mayores, las actitudes están más marcadas ' +
+          'en la gente de más edad.',
+        'Si la brecha es parecida en todos los tramos, la edad no está influyendo.',
+      ],
+      ojo:
+        'Los tramos altos suelen reunir pocos participantes. Y la edad viene mezclada con otras ' +
+        'cosas (estudios, años estudiando español, contacto con España), así que tampoco aquí se ' +
+        'puede aislar un único factor.',
       filas: agrupar(valoraciones, participanteDe, (_v, p) => tramoEdad(p?.edad), TRAMOS_EDAD),
     },
     {
       id: 'acierto',
       pregunta: '¿Se valora mejor un acento cuando se acierta su procedencia?',
       variable: '¿Acierta la comunidad autónoma?',
-      ayuda:
-        'Se comparan las valoraciones en que el participante situó el habla en su comunidad real ' +
-        'frente a aquellas en que falló. Ojo: aquí el cruce es por valoración, no por persona.',
+      queSeCalcula:
+        'Después de cada grabación se pregunta de qué comunidad autónoma cree el participante que ' +
+        'es esa habla. Aquí se comparan las valoraciones en las que acertó con aquellas en las ' +
+        'que falló.',
+      comoLeerlo: [
+        'Si las barras del grupo «Sí» están más altas, reconocer de dónde es un acento va ' +
+          'acompañado de una valoración mejor.',
+        'Eso no dice cuál es la causa: puede que reconocer el acento lo haga más familiar y ' +
+          'agradable, o que se reconozcan mejor precisamente los acentos que ya caen simpáticos.',
+      ],
+      ojo:
+        'Aquí se cuentan respuestas, no personas: la misma persona acierta en unas grabaciones y ' +
+        'falla en otras, por eso la columna «Particip.» suma más que el total de participantes. ' +
+        'Además, Granada, Cádiz y Madrid se aciertan mucho más que el resto, así que la fila «Sí» ' +
+        'está llena de esas ciudades y parte de la diferencia puede venir de ahí, no del acierto.',
       filas: agrupar(
         valoraciones,
         participanteDe,
@@ -328,9 +381,19 @@ export function computeCruces(participantes: Participante[], valoraciones: Valor
       id: 'lenguaMaterna',
       pregunta: '¿La lengua materna condiciona lo que se percibe?',
       variable: 'Lengua materna',
-      ayuda:
-        'El texto libre de la respuesta se agrupa automáticamente (árabe, amazigh, ambas, francés, ' +
-        'español, otra). Los grupos con muy pocos participantes hay que leerlos con prudencia.',
+      queSeCalcula:
+        'La lengua materna se pregunta en texto libre, así que las respuestas se agrupan solas ' +
+        '(árabe, amazigh, las dos, francés, español, otra). Dentro de cada grupo se comparan las ' +
+        'notas que se ponen a cada zona.',
+      comoLeerlo: [
+        'Si un grupo puntúa las hablas del sur claramente por encima del resto, merece la pena ' +
+          'leer sus respuestas abiertas en la pestaña «Respuestas»: la explicación suele estar ahí.',
+        'Brechas parecidas en todos los grupos significan que la lengua materna no está marcando ' +
+          'diferencias.',
+      ],
+      ojo:
+        'El reparto entre grupos es muy desigual. Compara solo los que tengan un número decente de ' +
+        'participantes e ignora los de tres o cuatro personas.',
       filas: agrupar(
         valoraciones,
         participanteDe,
@@ -342,7 +405,16 @@ export function computeCruces(participantes: Participante[], valoraciones: Valor
       id: 'generoIndices',
       pregunta: '¿Valoran igual las hablas los participantes y las participantes?',
       variable: 'Género del participante',
-      ayuda: 'El mismo cruce de índices, esta vez por género de quien responde.',
+      queSeCalcula:
+        'El mismo cálculo que en las tarjetas anteriores, esta vez agrupando por el género de ' +
+        'quien responde.',
+      comoLeerlo: [
+        'Funciona como control: si las barras y la brecha salen parecidas, el género de quien ' +
+          'responde no está cambiando la valoración de las hablas.',
+        'Si salen distintas, míralo junto con la tarjeta siguiente, que es la que pregunta ' +
+          'directamente por el género.',
+      ],
+      ojo: 'El grupo «Otro» suele reunir muy pocas personas: no saques conclusiones de su barra.',
       filas: agrupar(valoraciones, participanteDe, (_v, p) => p?.genero ?? null, GENEROS),
     },
   ];
@@ -382,9 +454,20 @@ export function computeCruces(participantes: Participante[], valoraciones: Valor
   const genero = {
     pregunta: '¿Las mujeres perciben más el trato diferenciado a Mariam?',
     variable: 'Género del participante',
-    ayuda:
-      '% de respuestas «Sí» a las dos preguntas sobre el género de quien habla, según el género de ' +
-      'quien responde. Cada participante contesta una vez por grabación, así que la n son valoraciones.',
+    queSeCalcula:
+      'Tras cada grabación se hacen dos preguntas sobre la conversación que se acaba de escuchar: ' +
+      'si ha habido un trato distinto entre Mariam y Omar, y si la cosa habría sido diferente con ' +
+      'una jefa mujer. Aquí se calcula qué porcentaje de respuestas «Sí» da cada género.',
+    comoLeerlo: [
+      'Cada barra es el porcentaje de síes. Si la de «Femenino» está claramente por encima, las ' +
+        'participantes perciben más ese trato diferenciado.',
+      'Una diferencia de tres o cuatro puntos no es nada. Una de veinte o treinta ya es un patrón.',
+      'Las dos preguntas pueden ir por separado: se puede percibir el trato diferenciado y aun así ' +
+        'pensar que con una jefa mujer habría pasado lo mismo.',
+    ],
+    ojo:
+      'Cada persona responde estas preguntas una vez por grabación, así que la columna «Valor.» ' +
+      'son respuestas, no personas: 690 respuestas son 115 participantes contestando seis veces.',
     filas: etiquetasGenero.map((g) => filaGenero(g, porGeneroP.get(g) ?? [])),
     total: filaGenero('Todos', valoraciones),
   };
@@ -396,14 +479,15 @@ export function computeCruces(participantes: Participante[], valoraciones: Valor
       .filter((par): par is [number, number] => par[0] !== null && Number.isFinite(par[1]));
 
   const correlacionesGlobales: Correlacion[] = [
-    { etiqueta: 'Voz × proximidad', ...pearson(paresDe(valoraciones, indiceVoz)) },
-    { etiqueta: 'Persona × proximidad', ...pearson(paresDe(valoraciones, indicePersona)) },
-    { etiqueta: 'Cultura × proximidad', ...pearson(paresDe(valoraciones, indiceCultura)) },
+    { etiqueta: 'Cercanía y nota de la voz', ...pearson(paresDe(valoraciones, indiceVoz)) },
+    { etiqueta: 'Cercanía y nota de la persona', ...pearson(paresDe(valoraciones, indicePersona)) },
+    { etiqueta: 'Cercanía y nota de la cultura', ...pearson(paresDe(valoraciones, indiceCultura)) },
   ];
 
   const porZonaCorr: Correlacion[] = (['meridional', 'septentrional'] as Zona[]).map((z) => {
     const vals = valoraciones.filter((v) => zonaDe.get(Number(v.grabacion)) === z);
-    return { etiqueta: `Voz × proximidad · ${z}`, ...pearson(paresDe(vals, indiceVoz)) };
+    const nombre = z === 'meridional' ? 'solo hablas del sur' : 'solo hablas del norte';
+    return { etiqueta: `Cercanía y nota de la voz · ${nombre}`, ...pearson(paresDe(vals, indiceVoz)) };
   });
 
   const porCiudadCorr = GRABACIONES.map((g) => {
@@ -436,9 +520,25 @@ export function computeCruces(participantes: Participante[], valoraciones: Valor
 
   const correlacion = {
     pregunta: '¿Cuanto más cercano me suena, mejor lo valoro?',
-    ayuda:
-      'Coeficiente de Pearson entre la proximidad declarada (1 = totalmente diferente, 5 = idéntica) ' +
-      'y el índice de cada escala. Positivo = a más cercanía percibida, mejor valoración.',
+    queSeCalcula:
+      'Después de cada grabación se pregunta cuánto se parece esa pronunciación a la propia ' +
+      '(1 = totalmente diferente, 5 = idéntica). Aquí se cruza esa respuesta con la nota que esa ' +
+      'misma persona le puso a esa misma grabación.',
+    comoLeerlo: [
+      'La gráfica de la izquierda es la más fácil de leer: si las barras van subiendo de ' +
+        '«Proximidad 1» a «Proximidad 5», la respuesta es que sí, cuanto más cercana suena mejor ' +
+        'se valora.',
+      'El número grande de arriba resume lo mismo en una cifra entre −1 y 1. Cerca de 0 significa ' +
+        'que las dos cosas no tienen nada que ver; cerca de 1, que suben juntas; negativa, que ' +
+        'cuanto más cercana suena peor se valora.',
+      'En la nube de puntos, cada punto es una valoración. Si la nube se inclina hacia arriba, las ' +
+        'dos cosas van juntas.',
+      'La última gráfica dice en qué grabaciones esa relación es más fuerte.',
+    ],
+    ojo:
+      'Que dos cosas vayan juntas no significa que una cause la otra. Y los extremos de la escala ' +
+      '(proximidad 1 y proximidad 5) suelen tener muy pocas respuestas, así que esas dos barras ' +
+      'bailan mucho.',
     globales: correlacionesGlobales,
     porZona: porZonaCorr,
     porCiudad: porCiudadCorr,
@@ -446,7 +546,47 @@ export function computeCruces(participantes: Participante[], valoraciones: Valor
     vozPorProximidad,
   };
 
-  return { indices, genero, correlacion };
+  // Vocabulario común de la pestaña. Se muestra arriba del todo, porque sin
+  // esto ninguna de las gráficas se entiende.
+  const glosario = [
+    {
+      termino: 'Cómo funciona el estudio',
+      texto:
+        'Cada participante escucha 6 grabaciones (unas de hablas del sur de España, las ' +
+        'meridionales, y otras del norte, las septentrionales) sin que se le diga nunca de dónde ' +
+        'es ninguna. Después las puntúa.',
+    },
+    {
+      termino: 'Índice',
+      texto:
+        'Cada grabación se valora con 11 pares de adjetivos para la voz, 6 para la persona y 6 ' +
+        'para la cultura, todos de 1 a 5. El índice es la media de esos adjetivos. 3 es el punto ' +
+        'medio: por encima, valoración positiva; por debajo, negativa.',
+    },
+    {
+      termino: 'Proximidad',
+      texto:
+        'Aparte de los adjetivos, se pregunta cuánto se parece esa pronunciación a la propia: ' +
+        '1 = totalmente diferente, 5 = idéntica.',
+    },
+    {
+      termino: 'Brecha',
+      texto:
+        'La nota media que una persona pone a las hablas del norte menos la que pone a las del ' +
+        'sur. Como las dos notas salen de la misma persona, la brecha no se ve afectada por que ' +
+        'haya gente generosa puntuando y gente severa: mide solo cuánta diferencia hace entre ' +
+        'zonas. 0 = las trata igual. Positiva = puntúa mejor al norte. Negativa = mejor al sur.',
+    },
+    {
+      termino: 'Particip. y Valor.',
+      texto:
+        'Cuántas personas y cuántas respuestas hay detrás de cada fila. Un grupo con menos de ' +
+        '15 o 20 personas es una pista, no una conclusión: con tan poca gente, un solo ' +
+        'participante raro mueve la media entera.',
+    },
+  ];
+
+  return { indices, genero, correlacion, glosario };
 }
 
 export type Cruces = ReturnType<typeof computeCruces>;
