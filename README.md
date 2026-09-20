@@ -17,6 +17,9 @@ Supabase y hay un panel privado con estadísticas, gráficas y exportación a CS
   - KPIs (participantes, valoraciones, edad media, proximidad media).
   - Gráficas: ranking de grabaciones, perfiles de voz/persona/cultura,
     percepción socioeconómica, región percibida, demografía y preguntas de género.
+  - **Pestaña «Cruces»**: las valoraciones cruzadas con el perfil de quien
+    responde (nivel de español, edad, lengua materna, estancias en España…).
+    Ver [Cruces por perfil del participante](#-cruces-por-perfil-del-participante).
   - Tabla de respuestas y ficha detallada por participante.
   - **Exportación a CSV** (aplanado, listo para Excel/R/SPSS).
 - **Todo configurable** desde un único archivo: `src/lib/config.ts`.
@@ -177,6 +180,75 @@ Otras opciones:
 - El panel `/admin` muestra el reparto por versión, las escuchas de cada audio
   con su ciudad y un aviso si el diseño deja de estar equilibrado.
 
+## 🔀 Cruces por perfil del participante
+
+Las medias por ciudad dicen *qué* se valora, pero no *quién* lo valora. La
+pestaña **🔀 Cruces** del panel responde a las preguntas que antes había que
+resolver a mano en Excel o SPSS:
+
+| Pregunta de investigación | Cruce |
+| ------------------------- | ----- |
+| ¿Quien tiene más nivel de español discrimina más entre acentos? | Índices × Nivel de español × Zona |
+| ¿Haber estado en España cambia la actitud? | Índices × ¿Visitado España? × Zona |
+| ¿Las mujeres perciben más el trato diferenciado a Mariam? | % síes × Género del participante |
+| ¿Los mayores tienen prejuicios más marcados? | Índices × Tramo de edad × Zona |
+| ¿Cuanto más cercano me suena, mejor lo valoro? | Índice de voz × Proximidad (correlación) |
+| ¿Se valora mejor un acento cuando se acierta su procedencia? | Índices × Acierto × Zona |
+| ¿La lengua materna condiciona lo que se percibe? | Índices × Lengua materna × Zona |
+
+Dos conceptos para leer las tablas:
+
+- **Índice** = media de todos los adjetivos de una escala (voz, persona o
+  cultura) en una valoración. Va de 1 a 5, como los ítems.
+- **Brecha (Δ)** = índice septentrional − índice meridional. Es la medida de
+  discriminación: **0** = valora igual las dos zonas, **positivo** = prefiere
+  las hablas septentrionales, **negativo** = las meridionales. En el panel sale
+  en azul o en naranja según hacia dónde se incline.
+
+Cada tarjeta trae un selector (voz / persona / cultura / proximidad), una
+gráfica con las dos zonas y la brecha, y la tabla completa con las cuatro
+medidas y la *n* de cada grupo. Para la correlación se muestran el coeficiente
+de Pearson, la media del índice en cada nivel de proximidad, la nube de puntos
+y el *r* dentro de cada grabación.
+
+Notas de método:
+
+- La **lengua materna** es texto libre, así que se agrupa automáticamente
+  (árabe / amazigh / ambas / francés / español / otra). La regla está en
+  `grupoLenguaMaterna()`, en `src/lib/cruces.ts`.
+- El cruce por **acierto** es por *valoración*, no por persona: la misma
+  persona acierta en unas grabaciones y falla en otras.
+- Los grupos con pocos participantes (la columna «Particip.» lo dice) hay que
+  leerlos con prudencia: el panel no calcula significación estadística.
+
+Todo esto también viaja en el **CSV exportado**, que además de los datos del
+participante y de la valoración incluye ya calculadas las columnas
+`tramo_edad`, `lengua_materna_grupo`, `comunidad_real`, `indice_voz`,
+`indice_persona`, `indice_cultura` y `acierto_region`. Es decir: los mismos
+cruces salen en una tabla dinámica sin recodificar nada.
+
+## 🧪 Datos de prueba (200 participantes)
+
+El estudio espera unas **200 participaciones**. Para ver el panel poblado antes
+de tenerlas:
+
+| Script | Qué hace |
+| ------ | -------- |
+| `supabase/seed_prueba.sql` | 20 participantes ficticios (120 valoraciones). |
+| `supabase/seed_200_participantes.sql` | Añade 180 más → **200 participantes y 1 200 valoraciones**. |
+| `supabase/limpiar_pruebas.sql` | Borra todo lo de ejemplo (`prueba%@ejemplo.test`). |
+
+Se ejecutan en ese orden desde **Supabase → SQL Editor**. Los 180 nuevos no son
+ruido: llevan dentro las mismas relaciones que mide la pestaña de cruces (más
+nivel de español → más brecha, haber visitado España → mejor valoración de las
+hablas meridionales, proximidad correlacionada con el índice de voz…), así que
+sirven para comprobar que las gráficas las detectan. Los correos van de
+`prueba021@ejemplo.test` a `prueba200@ejemplo.test` y el reparto por versión del
+formulario queda en 34/34/33/33/33/33, con 99-101 escuchas por grabación.
+
+> ⚠️ Antes de abrir el estudio al público, borra los datos de ejemplo con
+> `supabase/limpiar_pruebas.sql` (PASO 1) para que el BIBD empiece de cero.
+
 ## 🛠️ Personalizar el formulario
 
 Todo vive en `src/lib/config.ts`: adjetivos de las escalas, géneros, niveles
@@ -213,6 +285,7 @@ src/
     config.ts        ← configuración del estudio (fuente única de verdad)
     supabase.ts      ← clientes de Supabase
     stats.ts         ← cálculo de estadísticas
+    cruces.ts        ← cruces por perfil del participante y correlaciones
   components/        ← reproductor, diferencial semántico, paso de grabación, nav
   layouts/Layout.astro
   pages/
@@ -224,6 +297,7 @@ src/
   middleware.ts      ← protege /admin y /api/export
 supabase/
   schema.sql         ← esquema de la base de datos
-  seed_prueba.sql    ← datos de ejemplo para ver el panel poblado
+  seed_prueba.sql    ← 20 participantes de ejemplo
+  seed_200_participantes.sql ← 180 más, hasta los 200 que espera el estudio
   limpiar_pruebas.sql ← borrado de esos datos (y de todo, si hace falta)
 ```

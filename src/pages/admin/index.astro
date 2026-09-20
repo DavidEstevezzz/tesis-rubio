@@ -3,6 +3,7 @@ import Layout from '@/layouts/Layout.astro';
 import AdminNav from '@/components/AdminNav.astro';
 import { getServiceClient } from '@/lib/supabase';
 import { computeStats } from '@/lib/stats';
+import { interpretaR } from '@/lib/cruces';
 
 const user = Astro.locals.user;
 const supabase = getServiceClient();
@@ -14,6 +15,30 @@ const [{ data: participantes }, { data: valoraciones }] = await Promise.all([
 
 const stats = computeStats(participantes ?? [], valoraciones ?? []);
 const hayDatos = stats.resumen.totalParticipantes > 0;
+
+// Formato de las tablas de cruces: los huecos se muestran como «—» y las
+// brechas siempre con signo, para que se lea de un vistazo hacia qué zona
+// se inclina cada grupo.
+const num = (n: number | null | undefined) =>
+  n === null || n === undefined ? '\u2014' : n.toFixed(2);
+const delta = (n: number | null | undefined) =>
+  n === null || n === undefined ? '\u2014' : `${n > 0 ? '+' : ''}${n.toFixed(2)}`;
+const claseDelta = (n: number | null | undefined) =>
+  n === null || n === undefined
+    ? 'text-slate-400'
+    : n > 0.05
+      ? 'text-brand-700'
+      : n < -0.05
+        ? 'text-orange-600'
+        : 'text-slate-500';
+const pct = (n: number | null | undefined) =>
+  n === null || n === undefined ? '\u2014' : `${n}%`;
+const MEDIDAS_TABLA = [
+  { id: 'voz', etiqueta: 'Voz' },
+  { id: 'persona', etiqueta: 'Persona' },
+  { id: 'cultura', etiqueta: 'Cultura' },
+  { id: 'proximidad', etiqueta: 'Proximidad' },
+] as const;
 ---
 
 <Layout title="Resumen · Panel de resultados">
@@ -55,6 +80,9 @@ const hayDatos = stats.resumen.totalParticipantes > 0;
               <div class="tabbar" role="tablist" aria-label="Vistas del estudio">
                 <button class="tab" role="tab" data-tab="global" aria-selected="true">
                   🌍 Global · comparativa
+                </button>
+                <button class="tab tab-cruce" role="tab" data-tab="cruces" aria-selected="false">
+                  🔀 Cruces · perfil del participante
                 </button>
                 {stats.porGrabacion.map((g) => (
                   <button
@@ -253,6 +281,189 @@ const hayDatos = stats.resumen.totalParticipantes > 0;
                 )}
               </section>
 
+              <section class="panel hidden" data-panel="cruces" role="tabpanel">
+                <p class="panel-intro">
+                  Aquí se cruza <strong>lo que valora cada persona</strong> con <strong>quién es esa
+                  persona</strong> (nivel de español, edad, lengua materna, estancias en España…).
+                  El «índice» de una escala es la media de todos sus adjetivos (1-5), y la
+                  <strong>brecha</strong> es la resta
+                  <span class="chip chip-sep">septentrional</span> −
+                  <span class="chip chip-mer">meridional</span>: cuanto más lejos de 0, más
+                  diferencia hace ese grupo entre las dos zonas dialectales.
+                </p>
+
+                <div class="grid min-w-0 gap-6">
+                  {stats.cruces.indices.map((c) => (
+                    <div class="card min-w-0">
+                      <h2 class="card-title">{c.pregunta}</h2>
+                      <p class="card-sub">{c.ayuda}</p>
+
+                      <label class="mt-3 block text-sm font-medium text-slate-600">
+                        Medida
+                        <select
+                          data-medida={c.id}
+                          class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm sm:max-w-xs"
+                        ></select>
+                      </label>
+                      <div class="chart-box chart-tall"><canvas data-chart={`cruce-${c.id}`}></canvas></div>
+
+                      <div class="mt-4 overflow-x-auto">
+                        <table class="tabla-cruce">
+                          <thead>
+                            <tr>
+                              <th class="text-left">{c.variable}</th>
+                              <th class="text-right">Particip.</th>
+                              <th class="text-right">Valor.</th>
+                              {MEDIDAS_TABLA.map((m) => (
+                                <Fragment>
+                                  <th class="text-right">{m.etiqueta} mer.</th>
+                                  <th class="text-right">{m.etiqueta} sep.</th>
+                                  <th class="text-right">Δ</th>
+                                </Fragment>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {c.filas.map((f) => (
+                              <tr>
+                                <td class="font-semibold text-brand-700">{f.grupo}</td>
+                                <td class="text-right text-slate-500">{f.nParticipantes}</td>
+                                <td class="text-right text-slate-500">{f.total.n}</td>
+                                {MEDIDAS_TABLA.map((m) => (
+                                  <Fragment>
+                                    <td class="text-right">{num(f.meridional[m.id])}</td>
+                                    <td class="text-right">{num(f.septentrional[m.id])}</td>
+                                    <td class={`text-right font-semibold ${claseDelta(f.brecha[m.id])}`}>
+                                      {delta(f.brecha[m.id])}
+                                    </td>
+                                  </Fragment>
+                                ))}
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                      <p class="nota-tabla">
+                        mer. = media en las grabaciones meridionales · sep. = en las septentrionales ·
+                        Δ = sep. − mer. (azul: prefiere la septentrional; naranja: la meridional).
+                      </p>
+                    </div>
+                  ))}
+
+                  <div class="card min-w-0">
+                    <h2 class="card-title">{stats.cruces.genero.pregunta}</h2>
+                    <p class="card-sub">{stats.cruces.genero.ayuda}</p>
+                    <div class="chart-box"><canvas data-chart="cruceGenero"></canvas></div>
+                    <div class="mt-4 overflow-x-auto">
+                      <table class="tabla-cruce">
+                        <thead>
+                          <tr>
+                            <th class="text-left">Género del participante</th>
+                            <th class="text-right">Particip.</th>
+                            <th class="text-right">Valor.</th>
+                            <th class="text-right">Trato diferenciado · sí</th>
+                            <th class="text-right">% sí</th>
+                            <th class="text-right">Jefa mujer · sí</th>
+                            <th class="text-right">% sí</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {stats.cruces.genero.filas.map((f) => (
+                            <tr>
+                              <td class="font-semibold text-brand-700">{f.grupo}</td>
+                              <td class="text-right text-slate-500">{f.nParticipantes}</td>
+                              <td class="text-right text-slate-500">{f.nValoraciones}</td>
+                              <td class="text-right">{f.tratoDiferenciado.si} / {f.tratoDiferenciado.n}</td>
+                              <td class="text-right font-semibold text-brand-700">{pct(f.tratoDiferenciado.pct)}</td>
+                              <td class="text-right">{f.tratoMujerDiferente.si} / {f.tratoMujerDiferente.n}</td>
+                              <td class="text-right font-semibold text-brand-700">{pct(f.tratoMujerDiferente.pct)}</td>
+                            </tr>
+                          ))}
+                          <tr class="fila-total">
+                            <td class="font-semibold">{stats.cruces.genero.total.grupo}</td>
+                            <td class="text-right">{stats.cruces.genero.total.nParticipantes}</td>
+                            <td class="text-right">{stats.cruces.genero.total.nValoraciones}</td>
+                            <td class="text-right">
+                              {stats.cruces.genero.total.tratoDiferenciado.si} / {stats.cruces.genero.total.tratoDiferenciado.n}
+                            </td>
+                            <td class="text-right font-semibold">{pct(stats.cruces.genero.total.tratoDiferenciado.pct)}</td>
+                            <td class="text-right">
+                              {stats.cruces.genero.total.tratoMujerDiferente.si} / {stats.cruces.genero.total.tratoMujerDiferente.n}
+                            </td>
+                            <td class="text-right font-semibold">{pct(stats.cruces.genero.total.tratoMujerDiferente.pct)}</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  <div class="card min-w-0">
+                    <h2 class="card-title">{stats.cruces.correlacion.pregunta}</h2>
+                    <p class="card-sub">{stats.cruces.correlacion.ayuda}</p>
+
+                    <div class="mt-4 grid gap-3 grid-cols-2 lg:grid-cols-4">
+                      {stats.cruces.correlacion.globales.map((c) => (
+                        <div class="kpi kpi-sm">
+                          <span class="kpi-val">{c.r === null ? '—' : c.r}</span>
+                          <span class="kpi-label">{c.etiqueta} · r (n = {c.n})</span>
+                        </div>
+                      ))}
+                      <div class="kpi kpi-sm">
+                        <span class="kpi-val text-base leading-snug">
+                          {interpretaR(stats.cruces.correlacion.globales[0]?.r ?? null)}
+                        </span>
+                        <span class="kpi-label">Lectura del r de la voz</span>
+                      </div>
+                    </div>
+
+                    <div class="mt-6 grid gap-6 lg:grid-cols-2">
+                      <div>
+                        <p class="card-sub text-center">
+                          Media del índice de voz en cada nivel de proximidad declarado.
+                        </p>
+                        <div class="chart-box"><canvas data-chart="vozPorProximidad"></canvas></div>
+                      </div>
+                      <div>
+                        <p class="card-sub text-center">
+                          Una valoración = un punto (con un pequeño desplazamiento horizontal para
+                          que no se solapen).
+                        </p>
+                        <div class="chart-box"><canvas data-chart="nubeProximidad"></canvas></div>
+                      </div>
+                      <div class="lg:col-span-2">
+                        <p class="card-sub text-center">
+                          Correlación voz × proximidad dentro de cada grabación.
+                        </p>
+                        <div class="chart-box"><canvas data-chart="correlacionCiudad"></canvas></div>
+                      </div>
+                    </div>
+
+                    <div class="mt-4 overflow-x-auto">
+                      <table class="tabla-cruce">
+                        <thead>
+                          <tr>
+                            <th class="text-left">Cruce</th>
+                            <th class="text-right">r de Pearson</th>
+                            <th class="text-right">n</th>
+                            <th class="text-left">Lectura</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {[...stats.cruces.correlacion.globales, ...stats.cruces.correlacion.porZona].map((c) => (
+                            <tr>
+                              <td class="font-semibold text-brand-700">{c.etiqueta}</td>
+                              <td class="text-right font-semibold">{c.r === null ? '—' : c.r}</td>
+                              <td class="text-right text-slate-500">{c.n}</td>
+                              <td class="text-slate-500">{interpretaR(c.r)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
               {stats.porGrabacion.map((g) => (
                 <section class="panel hidden" data-panel={g.slug} data-numero={g.numero} role="tabpanel">
                   <div class="flex flex-wrap items-baseline justify-between gap-2">
@@ -401,6 +612,7 @@ const hayDatos = stats.resumen.totalParticipantes > 0;
         if (!pintados.has(destino)) {
           pintados.add(destino);
           if (destino === 'global') pintarGlobal(stats);
+          else if (destino === 'cruces') pintarCruces(stats);
           else pintarCiudad(stats, destino);
         }
       }
@@ -549,6 +761,205 @@ const hayDatos = stats.resumen.totalParticipantes > 0;
         type: 'bar',
         data: { labels: stats.demografia.tramos, datasets: [{ data: stats.demografia.edadHist, backgroundColor: PALETTE[2], borderRadius: 6 }] },
         options: barraBase(),
+      });
+    }
+
+    // ── Pestaña de cruces: perfil del participante × valoración ────────────
+    const MEDIDAS = [
+      { id: 'voz', etiqueta: 'Índice de voz' },
+      { id: 'persona', etiqueta: 'Índice de persona' },
+      { id: 'cultura', etiqueta: 'Índice de cultura' },
+      { id: 'proximidad', etiqueta: 'Proximidad' },
+    ];
+
+    function pintarCruces(stats: any) {
+      const panel = panelDe('cruces');
+      const cr = stats.cruces;
+
+      cr.indices.forEach((c: any) => pintarCruce(panel, c));
+
+      // % de síes en las dos preguntas de género, según el género del participante.
+      const g = cr.genero;
+      new Chart(canvas(panel, 'cruceGenero'), {
+        type: 'bar',
+        data: {
+          labels: g.filas.map((f: any) => f.grupo),
+          datasets: [
+            {
+              label: '¿Trato diferenciado entre Mariam y Omar?',
+              data: g.filas.map((f: any) => f.tratoDiferenciado.pct),
+              backgroundColor: PALETTE[0],
+              borderRadius: 5,
+            },
+            {
+              label: '¿Habría sido diferente con una jefa mujer?',
+              data: g.filas.map((f: any) => f.tratoMujerDiferente.pct),
+              backgroundColor: PALETTE[1],
+              borderRadius: 5,
+            },
+          ],
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'bottom' },
+            tooltip: {
+              callbacks: {
+                label: (i: any) => `${i.dataset.label}: ${i.raw}% de síes`,
+                afterLabel: (i: any) => `n = ${g.filas[i.dataIndex].nValoraciones} valoraciones`,
+              },
+            },
+          },
+          scales: { y: { min: 0, max: 100, ticks: { callback: (v: any) => `${v}%` } } },
+        },
+      });
+
+      // Índice de voz medio en cada nivel de la escala de proximidad.
+      const vp = cr.correlacion.vozPorProximidad;
+      new Chart(canvas(panel, 'vozPorProximidad'), {
+        type: 'bar',
+        data: {
+          labels: vp.map((x: any) => `Proximidad ${x.proximidad}`),
+          datasets: [
+            { label: 'Voz', data: vp.map((x: any) => x.voz), backgroundColor: PALETTE[0], borderRadius: 5 },
+            { label: 'Persona', data: vp.map((x: any) => x.persona), backgroundColor: PALETTE[1], borderRadius: 5 },
+            { label: 'Cultura', data: vp.map((x: any) => x.cultura), backgroundColor: PALETTE[2], borderRadius: 5 },
+          ],
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'bottom' },
+            tooltip: { callbacks: { afterLabel: (i: any) => `n = ${vp[i.dataIndex].n}` } },
+          },
+          scales: { y: escala15() },
+        },
+      });
+
+      // Nube de puntos con un jitter horizontal: la proximidad es una escala de
+      // 1 a 5, así que sin desplazar los puntos se apilarían en cinco columnas.
+      const jitter = (x: number) => x + (Math.random() - 0.5) * 0.55;
+      const nube = cr.correlacion.nube;
+      const porZona = (z: string) =>
+        nube.filter((p: any) => p.zona === z).map((p: any) => ({ x: jitter(p.x), y: p.y }));
+      new Chart(canvas(panel, 'nubeProximidad'), {
+        type: 'scatter',
+        data: {
+          datasets: [
+            { label: 'Meridional', data: porZona('meridional'), backgroundColor: 'rgba(255,122,47,0.45)' },
+            { label: 'Septentrional', data: porZona('septentrional'), backgroundColor: 'rgba(31,102,240,0.45)' },
+          ],
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'bottom' },
+            tooltip: {
+              callbacks: {
+                label: (i: any) => `proximidad ≈ ${Math.round(i.parsed.x)} · voz ${i.parsed.y.toFixed(2)}`,
+              },
+            },
+          },
+          scales: {
+            x: { min: 0.5, max: 5.5, title: { display: true, text: 'Proximidad declarada (1-5)' }, ticks: { stepSize: 1 } },
+            y: { ...escala15(), title: { display: true, text: 'Índice de voz (1-5)' } },
+          },
+        },
+      });
+
+      // r de Pearson dentro de cada grabación.
+      const pc = cr.correlacion.porCiudad;
+      new Chart(canvas(panel, 'correlacionCiudad'), {
+        type: 'bar',
+        data: {
+          labels: pc.map((x: any) => x.ciudad),
+          datasets: [{
+            data: pc.map((x: any) => x.r),
+            backgroundColor: pc.map((x: any) => COLOR_ZONA[x.zona] ?? BRAND),
+            borderRadius: 5,
+          }],
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: { callbacks: { afterLabel: (i: any) => `n = ${pc[i.dataIndex].n}` } },
+          },
+          scales: { y: { min: -1, max: 1, ticks: { stepSize: 0.5 } } },
+        },
+      });
+    }
+
+    /**
+     * Una tarjeta de cruce: barras meridional/septentrional por grupo y, en el
+     * eje derecho, la brecha entre ambas (la medida de «discriminación»).
+     */
+    function pintarCruce(panel: HTMLElement, c: any) {
+      const select = panel.querySelector<HTMLSelectElement>(`select[data-medida="${c.id}"]`);
+      const cv = canvas(panel, `cruce-${c.id}`);
+      if (!select || !cv) return;
+
+      MEDIDAS.forEach((m, i) => {
+        const opt = document.createElement('option');
+        opt.value = String(i);
+        opt.textContent = m.etiqueta;
+        select.appendChild(opt);
+      });
+
+      const serie = (zona: 'meridional' | 'septentrional', medida: string) =>
+        c.filas.map((f: any) => f[zona][medida]);
+      const brechas = (medida: string) => c.filas.map((f: any) => f.brecha[medida]);
+
+      const chart = new Chart(cv, {
+        type: 'bar',
+        data: {
+          labels: c.filas.map((f: any) => f.grupo),
+          datasets: [
+            { label: 'Meridional', data: serie('meridional', 'voz'), backgroundColor: ACCENT, borderRadius: 5, order: 2 },
+            { label: 'Septentrional', data: serie('septentrional', 'voz'), backgroundColor: BRAND, borderRadius: 5, order: 2 },
+            {
+              label: 'Brecha (sep. − mer.)',
+              type: 'line',
+              data: brechas('voz'),
+              borderColor: '#7c3aed',
+              backgroundColor: '#7c3aed',
+              borderWidth: 2,
+              tension: 0.25,
+              yAxisID: 'y1',
+              order: 1,
+            },
+          ],
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'bottom' },
+            tooltip: {
+              callbacks: {
+                afterLabel: (i: any) =>
+                  `n = ${c.filas[i.dataIndex].total.n} valoraciones · ${c.filas[i.dataIndex].nParticipantes} participantes`,
+              },
+            },
+          },
+          scales: {
+            y: { ...escala15(), title: { display: true, text: 'Media (1-5)' } },
+            y1: {
+              position: 'right',
+              suggestedMin: -0.6,
+              suggestedMax: 0.6,
+              grid: { drawOnChartArea: false },
+              title: { display: true, text: 'Brecha' },
+            },
+          },
+        },
+      });
+
+      select.addEventListener('change', () => {
+        const m = MEDIDAS[Number(select.value)];
+        chart.data.datasets[0].data = serie('meridional', m.id);
+        chart.data.datasets[1].data = serie('septentrional', m.id);
+        chart.data.datasets[2].data = brechas(m.id);
+        chart.update();
       });
     }
 
@@ -759,5 +1170,24 @@ const hayDatos = stats.resumen.totalParticipantes > 0;
     }
     .chip-mer { background: #ffedd5; color: #c2410c; }
     .chip-sep { background: #dbeafe; color: #1d4ed8; }
+
+    /* Pestaña de cruces: morada, para que no se confunda con las ciudades. */
+    .tab-cruce[aria-selected='true'] { background: #7c3aed; border-color: #7c3aed; }
+
+    /* Tablas de cruces: muchas columnas, así que letra pequeña y scroll lateral. */
+    .tabla-cruce { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+    .tabla-cruce th {
+      padding: 0.4rem 0.55rem; font-weight: 600; color: #64748b;
+      border-bottom: 1px solid #e2e8f0; white-space: nowrap;
+    }
+    .tabla-cruce td {
+      padding: 0.4rem 0.55rem; color: #334155;
+      border-bottom: 1px solid #f1f5f9; white-space: nowrap;
+    }
+    .tabla-cruce tbody tr:hover { background: #f8fafc; }
+    .tabla-cruce .fila-total td {
+      border-top: 2px solid #e2e8f0; background: #f8fafc; color: #1d3c8d;
+    }
+    .nota-tabla { margin-top: 0.5rem; font-size: 0.75rem; color: #94a3b8; }
   </style>
 </Layout>
