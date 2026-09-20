@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { getServiceClient } from '@/lib/supabase';
+import { getServiceClient, seleccionarTodo } from '@/lib/supabase';
 import { ESCALA_VOZ, ESCALA_PERSONA, ESCALA_CULTURA, GRABACIONES } from '@/lib/config';
 import {
   indiceVoz,
@@ -16,12 +16,25 @@ export const prerender = false;
 // participante repetidos. Ideal para abrir en Excel / analizar en R o SPSS.
 export const GET: APIRoute = async () => {
   const supabase = getServiceClient();
-  const [{ data: participantes }, { data: valoraciones }] = await Promise.all([
-    supabase.from('participantes').select('*'),
-    supabase.from('valoraciones').select('*').order('grabacion'),
+  // Por tandas: sin esto el CSV se cortaría en 1 000 filas (tope de la API de
+  // Supabase) y, como va ordenado por grabación, se perderían justo las
+  // últimas grabaciones del estudio en un archivo que parece completo.
+  // El `id` desempata para que el orden sea estable entre tandas.
+  const [participantes, valoraciones] = await Promise.all([
+    seleccionarTodo((desde, hasta) =>
+      supabase.from('participantes').select('*').order('id').range(desde, hasta)
+    ),
+    seleccionarTodo((desde, hasta) =>
+      supabase
+        .from('valoraciones')
+        .select('*')
+        .order('grabacion')
+        .order('id')
+        .range(desde, hasta)
+    ),
   ]);
 
-  const pById = new Map((participantes ?? []).map((p) => [p.id, p]));
+  const pById = new Map(participantes.map((p) => [p.id, p]));
 
   const pCols = [
     'email', 'bloque', 'genero', 'genero_otro', 'edad', 'ciudad_nacimiento', 'ciudad_residencia',
@@ -64,7 +77,7 @@ export const GET: APIRoute = async () => {
 
   const rows = [header.join(',')];
 
-  for (const v of valoraciones ?? []) {
+  for (const v of valoraciones) {
     const p = pById.get(v.participante_id) ?? {};
     const cells: any[] = [];
     for (const c of pCols) cells.push(fmtBool(p[c]));
